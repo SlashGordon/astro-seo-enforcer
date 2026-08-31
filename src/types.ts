@@ -24,6 +24,8 @@ export interface PageContext {
   file: string;
   /** Absolute path of the page on disk. */
   absolutePath: string;
+  /** Absolute path of the build output directory (root for `/`-rooted asset paths). */
+  distPath: string;
   /** Parsed document root (from `node-html-parser`). */
   root: HTMLElement;
   /** Normalised visible text content of `<body>` (script/style/head stripped). */

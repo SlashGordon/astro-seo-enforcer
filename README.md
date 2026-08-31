@@ -96,6 +96,12 @@ seoEnforcer({
     jsDependency: { minTextLength: 120 },
     robots: { severity: 'warning', directives: ['noindex', 'nofollow'] },
     duplicateId: true,
+    imageSize: {
+      severity: 'warning',
+      maxBytes: 204800, // 200 KB
+      requireDimensions: true,
+      maxScaleFactor: 2,
+    },
   },
 });
 ```
@@ -131,18 +137,19 @@ output directory** (e.g. `blog/hello/index.html`).
 Set a rule to `false` to disable it, `true` to enable it with defaults, or pass
 an object to override individual options.
 
-| Rule               | Default severity | What it checks                                                                                                                       |
-| ------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `title`            | error            | `<title>` exists and is `minLength`–`maxLength` chars. With `checkDuplicates`, the same title on two pages fails the build.          |
-| `metaDescription`  | error            | `<meta name="description">` exists and is `minLength`–`maxLength` chars.                                                             |
-| `headingHierarchy` | error            | Exactly one `<h1>` (`requireSingleH1`); no skipped levels such as `h2` → `h4` (`enforceNoSkips`); optional `requireH1First`.         |
-| `semanticHtml`     | error            | At least `minLandmarks` distinct landmark tags from `landmarkTags` (or their ARIA-role equivalents) are present.                     |
-| `imageAlt`         | error            | Every `<img>` has an `alt` attribute (`alt=""` is allowed for decorative images; a missing attribute is not).                        |
-| `canonical`        | error            | Exactly one `<link rel="canonical">` with a non-empty `href`. With `requireAbsolute`, the href must be an absolute http(s) URL.      |
-| `anchorText`       | warning          | `<a>` elements do not use generic text from `bannedPhrases`, and links are not left without any accessible name.                     |
-| `jsDependency`     | error            | `<body>` contains at least `minTextLength` characters of visible text (a near-empty body suggests client-only rendering).            |
-| `robots`           | warning          | Warns (configurable via `severity`) when `<meta name="robots">` / `googlebot` contains one of `directives` (`noindex` / `nofollow`). |
-| `duplicateId`      | error            | No `id` attribute value is used more than once in a document.                                                                        |
+| Rule               | Default severity | What it checks                                                                                                                                                                                                                      |
+| ------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`            | error            | `<title>` exists and is `minLength`–`maxLength` chars. With `checkDuplicates`, the same title on two pages fails the build.                                                                                                         |
+| `metaDescription`  | error            | `<meta name="description">` exists and is `minLength`–`maxLength` chars.                                                                                                                                                            |
+| `headingHierarchy` | error            | Exactly one `<h1>` (`requireSingleH1`); no skipped levels such as `h2` → `h4` (`enforceNoSkips`); optional `requireH1First`.                                                                                                        |
+| `semanticHtml`     | error            | At least `minLandmarks` distinct landmark tags from `landmarkTags` (or their ARIA-role equivalents) are present.                                                                                                                    |
+| `imageAlt`         | error            | Every `<img>` has an `alt` attribute (`alt=""` is allowed for decorative images; a missing attribute is not).                                                                                                                       |
+| `canonical`        | error            | Exactly one `<link rel="canonical">` with a non-empty `href`. With `requireAbsolute`, the href must be an absolute http(s) URL.                                                                                                     |
+| `anchorText`       | warning          | `<a>` elements do not use generic text from `bannedPhrases`, and links are not left without any accessible name.                                                                                                                    |
+| `jsDependency`     | error            | `<body>` contains at least `minTextLength` characters of visible text (a near-empty body suggests client-only rendering).                                                                                                           |
+| `robots`           | warning          | Warns (configurable via `severity`) when `<meta name="robots">` / `googlebot` contains one of `directives` (`noindex` / `nofollow`).                                                                                                |
+| `duplicateId`      | error            | No `id` attribute value is used more than once in a document.                                                                                                                                                                       |
+| `imageSize`        | warning          | Local `<img>` files are not heavier than `maxBytes`, declare `width`/`height` (`requireDimensions`, prevents CLS), and are not served more than `maxScaleFactor`× larger than their displayed size. Page speed is a ranking signal. |
 
 #### Rule option reference
 
@@ -185,7 +192,21 @@ interface RobotsRuleOptions {
   severity: 'error' | 'warning'; // default 'warning'
   directives: string[]; // default ['noindex','nofollow']
 }
+
+interface ImageSizeRuleOptions {
+  severity: 'error' | 'warning'; // default 'warning'
+  maxBytes: number; // default 204800 (200 KB)
+  requireDimensions: boolean; // default true
+  maxScaleFactor: number; // default 2 (0 disables the scale check)
+  extensions: string[]; // default ['png','jpg','jpeg','gif','webp']
+}
 ```
+
+> **Note:** `imageSize` reads the referenced files from the build output on disk.
+> It only inspects local raster images — remote URLs (`http(s)://`, `//host/…`),
+> inline `data:` URIs and vector `.svg` files are skipped. The scale check reads
+> intrinsic dimensions straight from the image header (no pixel decoding), so it
+> stays fast even on large sites.
 
 ---
 

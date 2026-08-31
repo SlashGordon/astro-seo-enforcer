@@ -19,6 +19,7 @@ export function makeContext(
   return {
     file,
     absolutePath: `/virtual/${file}`,
+    distPath: '/virtual',
     root,
     bodyText: extractVisibleText(root),
     config: resolveConfig(userConfig),
@@ -39,7 +40,7 @@ export const CLEAN_PAGE = `<!doctype html>
 <h1>Widgets</h1>
 <h2>Details</h2>
 <p>Plenty of real crawlable text content here that is clearly not hidden behind any client side JavaScript whatsoever.</p>
-<img src="/w.png" alt="A widget">
+<img src="/w.png" alt="A widget" width="200" height="150">
 </main>
 <footer>Copyright 2026</footer>
 </body>

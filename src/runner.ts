@@ -68,6 +68,7 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
     const ctx: PageContext = {
       file,
       absolutePath,
+      distPath,
       root,
       bodyText: extractVisibleText(root),
       config,

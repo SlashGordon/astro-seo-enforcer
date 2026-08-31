@@ -102,6 +102,7 @@ export type {
   JsDependencyRuleOptions,
   CanonicalRuleOptions,
   RobotsRuleOptions,
+  ImageSizeRuleOptions,
 } from './config.js';
 export type { Violation, Severity, PageContext, Rule } from './types.js';
 export { formatReport } from './reporter.js';

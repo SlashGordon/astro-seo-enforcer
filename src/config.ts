@@ -58,6 +58,27 @@ export interface RobotsRuleOptions {
   directives: string[];
 }
 
+export interface ImageSizeRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /** Maximum weight of a single local image, in bytes, before it is flagged. */
+  maxBytes: number;
+  /**
+   * Require every `<img>` to declare intrinsic `width` and `height` (either as
+   * attributes or inline `style`). Missing dimensions cause layout shift (CLS),
+   * a Core Web Vitals metric.
+   */
+  requireDimensions: boolean;
+  /**
+   * Flag an image whose intrinsic pixel dimensions exceed its displayed size by
+   * more than this factor. `2` allows serving 2× assets for high-DPI screens.
+   * Set to `0` to disable the scale check.
+   */
+  maxScaleFactor: number;
+  /** File extensions (lower-case, no dot) treated as raster images to inspect. */
+  extensions: string[];
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Public configuration                                                       */
 /* -------------------------------------------------------------------------- */
@@ -73,6 +94,7 @@ export interface RulesConfig {
   jsDependency: boolean | Partial<JsDependencyRuleOptions>;
   robots: boolean | Partial<RobotsRuleOptions>;
   duplicateId: boolean;
+  imageSize: boolean | Partial<ImageSizeRuleOptions>;
 }
 
 export interface SeoEnforcerUserConfig {
@@ -113,6 +135,7 @@ export interface ResolvedConfig {
     jsDependency: false | JsDependencyRuleOptions;
     robots: false | RobotsRuleOptions;
     duplicateId: boolean;
+    imageSize: false | ImageSizeRuleOptions;
   };
 }
 
@@ -168,6 +191,15 @@ export const DEFAULT_ROBOTS: RobotsRuleOptions = {
   directives: ['noindex', 'nofollow'],
 };
 
+export const DEFAULT_IMAGE_SIZE: ImageSizeRuleOptions = {
+  severity: 'warning',
+  // ~200 KB. Above this a single image starts to noticeably hurt LCP / load time.
+  maxBytes: 200 * 1024,
+  requireDimensions: true,
+  maxScaleFactor: 2,
+  extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'],
+};
+
 /* -------------------------------------------------------------------------- */
 /*  Resolution                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -207,6 +239,7 @@ export function resolveConfig(userConfig: SeoEnforcerUserConfig = {}): ResolvedC
       jsDependency: resolveRule(rules.jsDependency, DEFAULT_JS_DEPENDENCY),
       robots: resolveRule(rules.robots, DEFAULT_ROBOTS),
       duplicateId: rules.duplicateId !== false,
+      imageSize: resolveRule(rules.imageSize, DEFAULT_IMAGE_SIZE),
     },
   };
 }

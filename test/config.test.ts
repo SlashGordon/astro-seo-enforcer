@@ -16,6 +16,12 @@ describe('resolveConfig', () => {
     expect(config.rules.metaDescription).toMatchObject({ minLength: 50, maxLength: 160 });
     expect(config.rules.imageAlt).toBe(true);
     expect(config.rules.duplicateId).toBe(true);
+    expect(config.rules.imageSize).toMatchObject({
+      severity: 'warning',
+      maxBytes: 200 * 1024,
+      requireDimensions: true,
+      maxScaleFactor: 2,
+    });
   });
 
   it('disables a rule when it is set to false', () => {

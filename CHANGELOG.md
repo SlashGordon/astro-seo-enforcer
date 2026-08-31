@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `imageSize` rule (warning by default) that checks the real image files behind
+  local `<img src>` for three page-speed problems: files heavier than `maxBytes`
+  (default 200 KB), missing `width`/`height` (layout shift / CLS), and images
+  served more than `maxScaleFactor`× (default 2×) larger than their displayed
+  size. Reads intrinsic dimensions straight from PNG/JPEG/GIF/WebP headers with
+  no extra dependencies; skips remote URLs, `data:` URIs and SVGs.
+
 ## [1.0.0] - 2026-08-31
 
 First stable release.
