@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-31
+
 ### Added
 
 - `imageSize` rule (warning by default) that checks the real image files behind
@@ -58,5 +60,6 @@ First stable release.
 - Astro `^3 || ^4 || ^5 || ^6 || ^7`.
 - Node.js `>= 18.14.1`.
 
-[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/SlashGordon/astro-seo-enforcer/releases/tag/v1.0.0

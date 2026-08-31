@@ -1,6 +1,6 @@
 {
   "name": "astro-seo-enforcer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Astro integration that parses the final static HTML and fails the build when it detects SEO violations.",
   "type": "module",
   "license": "MIT",
