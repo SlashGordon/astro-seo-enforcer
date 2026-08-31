@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="astro-seo-enforcer demo — a compliant home page"
+  description="The home page of a small Astro site that keeps the astro-seo-enforcer integration enabled during every build so that SEO regressions fail fast."
+>
+  <h1>astro-seo-enforcer demo site</h1>
+  <p>
+    Every page in this site is written to satisfy the default rule set: a unique
+    title of the right length, a meta description within range, exactly one
+    <code>&lt;h1&gt;</code>, a sensible heading outline, semantic landmarks and
+    link text that makes sense on its own.
+  </p>
+  <h2>What the build does</h2>
+  <p>
+    The integration parses the generated HTML inside the
+    <code>astro:build:done</code> hook. If any rule fails, <code>astro build</code>
+    exits with a non-zero status and the CI job turns red. See the
+    <a href="/about/">project background</a> for the full story.
+  </p>
+</BaseLayout>

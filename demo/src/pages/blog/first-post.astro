@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="First article: Astro pages that pass every SEO rule"
+  description="A nested route showing that directory traversal, canonical URL detection and the heading-outline check all keep working below the site root."
+>
+  <h1>Writing pages that pass every SEO rule</h1>
+  <p>
+    This article lives at a nested path, so the recursive directory traversal in
+    the integration is exercised on more than just the site root.
+  </p>
+  <h2>The short checklist</h2>
+  <p>
+    Descriptive link text, exactly one heading at the top level, an absolute
+    canonical URL and enough real text content to prove the page is not an empty
+    client-rendered shell. Continue to the
+    <a href="/about/">about page for this demo</a>.
+  </p>
+</BaseLayout>

@@ -1,0 +1,17 @@
+{
+  "name": "astro-seo-enforcer-demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end demo: a small Astro site with astro-seo-enforcer wired in and passing.",
+  "scripts": {
+    "prebuild": "npm --prefix .. run build",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^7.2.9",
+    "astro-seo-enforcer": "file:.."
+  }
+}

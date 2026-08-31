@@ -1,0 +1,38 @@
+---
+// Shared shell for every demo page. It provides the semantic landmarks
+// (<header>, <nav>, <main>, <footer>) and an absolute canonical URL so the
+// individual pages only need to supply their own heading outline and copy.
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL.href} />
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Primary">
+        <a href="/">Demo home</a>
+        <a href="/about/">About the project</a>
+        <a href="/blog/first-post/">Latest article</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer>
+      <p>A tiny Astro site used to exercise the astro-seo-enforcer integration in CI.</p>
+    </footer>
+  </body>
+</html>

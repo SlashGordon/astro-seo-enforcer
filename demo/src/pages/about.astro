@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About the astro-seo-enforcer demo and its checks"
+  description="Why this demo exists, what each route proves about the integration, and how a single failed rule turns the local build and the CI pipeline red."
+>
+  <h1>About this demo</h1>
+  <p>
+    This is a second route, so the duplicate-title rule has something real to
+    compare against. Its title and description differ from every other page here.
+  </p>
+  <h2>How the check runs</h2>
+  <p>
+    After Astro writes the static files, the integration walks the output
+    directory, parses each HTML document once and runs the enabled rules against
+    it. Titles are also collected globally to detect duplicates across pages.
+  </p>
+  <h3>Failure behaviour</h3>
+  <p>
+    On a violation the build prints a grouped, readable report and exits with a
+    non-zero status code. Return to the <a href="/">demo home page</a>.
+  </p>
+</BaseLayout>

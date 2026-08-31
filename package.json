@@ -1,0 +1,68 @@
+{
+  "name": "astro-seo-enforcer",
+  "version": "0.1.0",
+  "description": "Astro integration that parses the final static HTML and fails the build when it detects SEO violations.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Christoph Dieck",
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "withastro",
+    "seo",
+    "html",
+    "linter",
+    "ci",
+    "build"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/christophdieck/astro-seo-enforcer.git"
+  },
+  "homepage": "https://github.com/christophdieck/astro-seo-enforcer#readme",
+  "bugs": {
+    "url": "https://github.com/christophdieck/astro-seo-enforcer/issues"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.14.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "node-html-parser": "^6.1.13"
+  },
+  "peerDependencies": {
+    "astro": "^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "astro": "^4.16.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.9"
+  }
+}

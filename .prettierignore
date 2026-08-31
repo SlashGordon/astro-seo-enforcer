@@ -1,0 +1,8 @@
+dist/
+node_modules/
+coverage/
+.astro/
+package-lock.json
+
+# Astro single-file components need prettier-plugin-astro, which is not installed.
+*.astro

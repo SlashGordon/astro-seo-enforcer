@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write # OIDC — npm trusted publishing + provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted publishing (tokenless OIDC auth) needs npm >= 11.5.1;
+      # Node 22 still bundles npm 10.
+      - run: npm install -g npm@latest
+      - run: npm --version
+
+      - name: Tag matches package.json version
+        run: |
+          pkg="v$(node -p "require('./package.json').version")"
+          echo "git tag=$GITHUB_REF_NAME  package.json=$pkg"
+          test "$pkg" = "$GITHUB_REF_NAME"
+
+      - run: npm ci
+      - run: npm run typecheck && npm test && npm run build
+      - run: npm publish --provenance --access public
