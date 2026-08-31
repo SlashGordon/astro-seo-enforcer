@@ -1,10 +1,10 @@
 {
   "name": "astro-seo-enforcer",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Astro integration that parses the final static HTML and fails the build when it detects SEO violations.",
   "type": "module",
   "license": "MIT",
-  "author": "Christoph Dieck",
+  "author": "SlashGordon",
   "keywords": [
     "astro",
     "astro-integration",
@@ -17,11 +17,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/christophdieck/astro-seo-enforcer.git"
+    "url": "git+https://github.com/SlashGordon/astro-seo-enforcer.git"
   },
-  "homepage": "https://github.com/christophdieck/astro-seo-enforcer#readme",
+  "homepage": "https://github.com/SlashGordon/astro-seo-enforcer#readme",
   "bugs": {
-    "url": "https://github.com/christophdieck/astro-seo-enforcer/issues"
+    "url": "https://github.com/SlashGordon/astro-seo-enforcer/issues"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

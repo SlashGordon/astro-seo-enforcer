@@ -7,27 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [1.0.0] - 2026-08-31
 
-- Unit test suite (Vitest) covering config resolution, the `exclude` matcher,
-  every rule, the reporter and the end-to-end runner / integration hook.
-- `demo/` end-to-end Astro site that wires the integration in via `file:..` and
-  is built in CI as an integration test.
-- Prettier setup with `format` / `format:check` scripts.
-
-### Changed
-
-- Widened the `astro` peer dependency range to `^3 || ^4 || ^5 || ^6 || ^7`.
-
-## [0.1.0] - 2026-08-31
+First stable release.
 
 ### Added
 
-- Initial release.
 - Astro integration hooking into `astro:build:done` that parses the generated
   static HTML with `node-html-parser` and fails the build on SEO violations.
 - Configuration object with `enabled`, `exclude` (prefix / `*` / `**` glob /
-  `RegExp`), `failOn` (`error` | `warning` | `never`) and per-rule options.
+  `RegExp`), `failOn` (`error` | `warning` | `never`) and per-rule options, plus
+  the `defineSeoEnforcerConfig` helper.
 - Rules:
   - `title` — presence + 30–60 char length, plus cross-page duplicate detection.
   - `metaDescription` — presence + 50–160 char length.
@@ -48,6 +38,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when the `failOn` threshold is reached.
 - Exported internals for programmatic use: `runSeoChecks`, `resolveConfig`,
   `formatReport`, `defineSeoEnforcerConfig`, `SeoEnforcerError` and their types.
+- Unit test suite (Vitest) covering config resolution, the `exclude` matcher,
+  every rule, the reporter and the end-to-end runner / integration hook.
+- `demo/` end-to-end Astro site that wires the integration in via `file:..` and
+  is built in CI as an integration test.
+- Prettier setup with `format` / `format:check` scripts.
 
-[Unreleased]: https://github.com/christophdieck/astro-seo-enforcer/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/christophdieck/astro-seo-enforcer/releases/tag/v0.1.0
+### Compatibility
+
+- Astro `^3 || ^4 || ^5 || ^6 || ^7`.
+- Node.js `>= 18.14.1`.
+
+[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/SlashGordon/astro-seo-enforcer/releases/tag/v1.0.0
