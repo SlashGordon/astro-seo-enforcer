@@ -149,7 +149,7 @@ an object to override individual options.
 | `jsDependency`     | error            | `<body>` contains at least `minTextLength` characters of visible text (a near-empty body suggests client-only rendering).                                                                                                           |
 | `robots`           | warning          | Warns (configurable via `severity`) when `<meta name="robots">` / `googlebot` contains one of `directives` (`noindex` / `nofollow`).                                                                                                |
 | `duplicateId`      | error            | No `id` attribute value is used more than once in a document.                                                                                                                                                                       |
-| `imageSize`        | warning          | Local `<img>` files are not heavier than `maxBytes`, declare `width`/`height` (`requireDimensions`, prevents CLS), and are not served more than `maxScaleFactor`× larger than their displayed size. Page speed is a ranking signal. |
+| `imageSize`        | warning          | Local images are not heavier than `maxBytes` — checked for `<img src>` and for every `<img srcset>` / `<picture>` `<source srcset>` — declare `width`/`height` (`requireDimensions`, prevents CLS). Page speed is a ranking signal. |
 
 #### Rule option reference
 
@@ -204,9 +204,12 @@ interface ImageSizeRuleOptions {
 
 > **Note:** `imageSize` reads the referenced files from the build output on disk.
 > It only inspects local raster images — remote URLs (`http(s)://`, `//host/…`),
-> inline `data:` URIs and vector `.svg` files are skipped. The scale check reads
-> intrinsic dimensions straight from the image header (no pixel decoding), so it
-> stays fast even on large sites.
+> inline `data:` URIs and vector `.svg` files are skipped. The `maxBytes` weight
+> check covers every file the browser might download: `<img src>` plus every URL
+> in an `<img srcset>` or a `<picture>` `<source srcset>`. The scale check looks
+> only at the painted `<img src>` (responsive `srcset` candidates are meant to
+> vary in size) and reads intrinsic dimensions straight from the image header (no
+> pixel decoding), so it stays fast even on large sites.
 
 ---
 

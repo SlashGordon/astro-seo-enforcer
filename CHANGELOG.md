@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `imageSize` now applies the `maxBytes` weight check to responsive image
+  candidates too: every URL in an `<img srcset>` and in a `<picture>`
+  `<source srcset>`, not just `<img src>`. Each file is still reported at most
+  once per page, and the `maxScaleFactor` scale check remains scoped to the
+  painted `<img src>`.
+
 ## [1.1.0] - 2026-08-31
 
 ### Added

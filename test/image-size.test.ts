@@ -182,4 +182,41 @@ describe('imageSizeRule', () => {
       [],
     );
   });
+
+  it('weighs heavy files referenced only through <img srcset>', () => {
+    const found = imageSizeRule(
+      ctxFor(
+        '<img src="/small.png" srcset="/small.png 400w, /huge.png 1280w" width="400" height="300">',
+      ),
+    );
+    expect(
+      found.some((v) => v.message.includes('huge.png') && v.message.includes('srcset candidate')),
+    ).toBe(true);
+  });
+
+  it('weighs heavy files referenced through a <picture> <source srcset>', () => {
+    const found = imageSizeRule(
+      ctxFor(
+        '<picture><source srcset="/huge.png 1280w" type="image/webp">' +
+          '<img src="/small.png" width="400" height="300"></picture>',
+      ),
+    );
+    expect(found.some((v) => v.message.includes('huge.png'))).toBe(true);
+  });
+
+  it('does not apply the scale check to srcset candidates', () => {
+    // oversized.png is 2000x1500; only flagged via the <img src> scale check,
+    // never because it appears as a large srcset candidate.
+    const found = imageSizeRule(
+      ctxFor('<img src="/small.png" srcset="/oversized.png 2000w" width="400" height="300">'),
+    );
+    expect(found).toEqual([]);
+  });
+
+  it('reports a file shared by src and srcset only once', () => {
+    const found = imageSizeRule(
+      ctxFor('<img src="/huge.png" srcset="/huge.png 1280w" width="400" height="300">'),
+    );
+    expect(found.filter((v) => v.message.includes('huge.png')).length).toBe(1);
+  });
 });
