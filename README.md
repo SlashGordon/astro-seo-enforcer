@@ -1,5 +1,9 @@
 # astro-seo-enforcer
 
+[![Release](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/release.yml/badge.svg)](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/release.yml)
+
+[![CI](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/ci.yml/badge.svg)](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/ci.yml)
+
 > An Astro integration that parses your **final, generated static HTML** and **fails the build** when it detects SEO violations.
 
 `astro-seo-enforcer` hooks into `astro:build:done`, walks the output directory,
