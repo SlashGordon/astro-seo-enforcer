@@ -10,6 +10,8 @@
     "astro-integration",
     "withastro",
     "seo",
+    "performance",
+    "optimization",
     "html",
     "linter",
     "ci",

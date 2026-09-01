@@ -20,6 +20,21 @@ readable report and exits with a non-zero code so your CI/CD pipeline fails.
 
 ## Installation
 
+### Automatic setup
+
+```bash
+npx astro add astro-seo-enforcer
+# or
+pnpm astro add astro-seo-enforcer
+# or
+yarn astro add astro-seo-enforcer
+```
+
+This installs the package and adds it to the `integrations` array in your
+`astro.config.*` for you. Then jump to [Configuration](#configuration).
+
+### Manual setup
+
 ```bash
 npm install -D astro-seo-enforcer
 # or
