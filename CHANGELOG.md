@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-09-01
+
+### Changed
+
+- Added `performance` and `optimization` keywords so the package is categorised
+  under **Performance + SEO** in the Astro integrations directory.
+- README: documented `astro add astro-seo-enforcer` for automatic setup
+  alongside the existing manual install instructions.
+
 ## [1.1.1] - 2026-09-01
 
 ### Changed
@@ -70,7 +79,8 @@ First stable release.
 - Astro `^3 || ^4 || ^5 || ^6 || ^7`.
 - Node.js `>= 18.14.1`.
 
-[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/SlashGordon/astro-seo-enforcer/releases/tag/v1.0.0
