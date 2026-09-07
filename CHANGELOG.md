@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-07
+
+### Added
+
+- `internalLinks` rule (error by default) that checks every internal `<a href>`
+  against the files Astro wrote to the output directory. Links resolve the way a
+  static host serves files: `/blog/` and `/blog` both map to `blog/index.html`,
+  an extensionless path also tries `<path>.html`, and a path with an extension
+  must match a file exactly. With `checkFragments` (on by default), a same-page
+  `#section` link must match an `id` or `<a name>` on the page. External links,
+  `mailto:` / `tel:`, `href="#"` and query-only links are skipped; use `ignore`
+  for paths that only exist at runtime, such as redirects or server routes.
+
+### Changed
+
+- The runner now indexes every file in the build output, static assets as well
+  as HTML pages, so rules can resolve link targets. HTML parsing and rule
+  execution are otherwise unchanged.
+
 ## [1.1.2] - 2026-09-01
 
 ### Changed
@@ -79,7 +98,8 @@ First stable release.
 - Astro `^3 || ^4 || ^5 || ^6 || ^7`.
 - Node.js `>= 18.14.1`.
 
-[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.0.0...v1.1.0
