@@ -73,6 +73,47 @@ describe('runSeoChecks', () => {
     expect(result.violations).toEqual([]);
   });
 
+  it('flags near-duplicate content across pages with distinct titles', async () => {
+    const filler = Array.from({ length: 220 }, (_, i) => `word${i}`).join(' ');
+    const page = (slug: string) =>
+      `<!doctype html><html lang="en"><head>` +
+      `<title>Unique title for the ${slug} page about widgets</title>` +
+      `<meta name="description" content="A meta description that is comfortably longer than fifty characters so the rule stays quiet.">` +
+      `<link rel="canonical" href="https://example.com/${slug}">` +
+      `</head><body><header><nav>Home</nav></header><main><h1>${slug}</h1>` +
+      `<p>${filler}</p></main><footer>Copyright 2026</footer></body></html>`;
+    await write('a.html', page('a'));
+    await write('b.html', page('b'));
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+
+    const dupes = result.violations.filter((v) => v.rule === 'duplicateContent');
+    expect(dupes).toHaveLength(2);
+    expect(new Set(dupes.map((v) => v.file))).toEqual(new Set(['a.html', 'b.html']));
+    expect(
+      result.violations.some((v) => v.rule === 'title' && v.message.includes('Duplicate')),
+    ).toBe(false);
+  });
+
+  it('does not run the duplicateContent check when the rule is disabled', async () => {
+    const filler = Array.from({ length: 220 }, (_, i) => `word${i}`).join(' ');
+    const page =
+      `<!doctype html><html lang="en"><head>` +
+      `<title>Reasonably descriptive shared page title about widgets</title>` +
+      `<meta name="description" content="A meta description that is comfortably longer than fifty characters so the rule stays quiet.">` +
+      `<link rel="canonical" href="https://example.com/x">` +
+      `</head><body><main><h1>Widgets</h1><p>${filler}</p></main></body></html>`;
+    await write('a.html', page);
+    await write('b.html', page);
+
+    const result = await runSeoChecks({
+      distPath: dir,
+      config: resolveConfig({ rules: { duplicateContent: false } }),
+    });
+
+    expect(result.violations.some((v) => v.rule === 'duplicateContent')).toBe(false);
+  });
+
   it('skips excluded paths', async () => {
     await write('index.html', CLEAN_PAGE);
     await write('drafts/wip.html', '<html><head></head><body></body></html>');

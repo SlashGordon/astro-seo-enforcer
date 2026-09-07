@@ -22,6 +22,12 @@ describe('resolveConfig', () => {
       requireDimensions: true,
       maxScaleFactor: 2,
     });
+    expect(config.rules.duplicateContent).toMatchObject({
+      severity: 'warning',
+      threshold: 0.9,
+      minWords: 200,
+      maxPages: 1500,
+    });
   });
 
   it('disables a rule when it is set to false', () => {

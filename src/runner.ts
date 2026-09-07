@@ -6,6 +6,7 @@ import type { HTMLElement } from 'node-html-parser';
 import type { ResolvedConfig } from './config.js';
 import type { PageContext, Violation } from './types.js';
 import { allRules } from './rules/index.js';
+import { findDuplicateContent } from './rules/duplicate-content.js';
 import { extractVisibleText } from './util/dom.js';
 import { isExcluded } from './util/exclude.js';
 
@@ -32,6 +33,8 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
   const files = allFiles.filter((absolutePath) => absolutePath.toLowerCase().endsWith('.html'));
   const violations: Violation[] = [];
   const titleRegistry = new Map<string, string[]>();
+  // Visible text per page, kept only when the duplicateContent rule is enabled.
+  const contentPages: Array<{ file: string; text: string }> = [];
   let scannedFiles = 0;
 
   for (const absolutePath of files) {
@@ -93,6 +96,10 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
       }
     }
 
+    if (config.rules.duplicateContent) {
+      contentPages.push({ file, text: ctx.bodyText });
+    }
+
     // Collect titles so cross-page duplicates can be reported once all files are in.
     const titleOptions = config.rules.title;
     if (titleOptions && titleOptions.checkDuplicates) {
@@ -117,6 +124,11 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
         hint: 'Give every page a unique <title>.',
       });
     }
+  }
+
+  const duplicateContentOptions = config.rules.duplicateContent;
+  if (duplicateContentOptions) {
+    violations.push(...findDuplicateContent(contentPages, duplicateContentOptions));
   }
 
   // Stable ordering: by file, then errors before warnings, then by rule name.

@@ -75,6 +75,26 @@ export interface InternalLinksRuleOptions {
   ignore: Array<string | RegExp>;
 }
 
+export interface DuplicateContentRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /**
+   * Minimum text similarity (`0` to `1`) between two pages before they are
+   * reported. `0.9` means the pages share at least ~90% of their five-word runs.
+   */
+  threshold: number;
+  /**
+   * Ignore pages with fewer than this many words. Short pages overlap on shared
+   * nav and footer text alone, which is not a real content problem.
+   */
+  minWords: number;
+  /**
+   * Skip the whole check when more than this many pages qualify. Every pair of
+   * pages is compared, so the cost grows with the square of the page count.
+   */
+  maxPages: number;
+}
+
 export interface ImageSizeRuleOptions {
   /** Severity emitted for every finding this rule produces. */
   severity: Severity;
@@ -113,6 +133,7 @@ export interface RulesConfig {
   duplicateId: boolean;
   imageSize: boolean | Partial<ImageSizeRuleOptions>;
   internalLinks: boolean | Partial<InternalLinksRuleOptions>;
+  duplicateContent: boolean | Partial<DuplicateContentRuleOptions>;
 }
 
 export interface SeoEnforcerUserConfig {
@@ -155,6 +176,7 @@ export interface ResolvedConfig {
     duplicateId: boolean;
     imageSize: false | ImageSizeRuleOptions;
     internalLinks: false | InternalLinksRuleOptions;
+    duplicateContent: false | DuplicateContentRuleOptions;
   };
 }
 
@@ -216,6 +238,13 @@ export const DEFAULT_INTERNAL_LINKS: InternalLinksRuleOptions = {
   ignore: [],
 };
 
+export const DEFAULT_DUPLICATE_CONTENT: DuplicateContentRuleOptions = {
+  severity: 'warning',
+  threshold: 0.9,
+  minWords: 200,
+  maxPages: 1500,
+};
+
 export const DEFAULT_IMAGE_SIZE: ImageSizeRuleOptions = {
   severity: 'warning',
   // ~200 KB. Above this a single image starts to noticeably hurt LCP / load time.
@@ -266,6 +295,7 @@ export function resolveConfig(userConfig: SeoEnforcerUserConfig = {}): ResolvedC
       duplicateId: rules.duplicateId !== false,
       imageSize: resolveRule(rules.imageSize, DEFAULT_IMAGE_SIZE),
       internalLinks: resolveRule(rules.internalLinks, DEFAULT_INTERNAL_LINKS),
+      duplicateContent: resolveRule(rules.duplicateContent, DEFAULT_DUPLICATE_CONTENT),
     },
   };
 }

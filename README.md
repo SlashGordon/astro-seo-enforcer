@@ -122,6 +122,7 @@ seoEnforcer({
       requireDimensions: true,
       maxScaleFactor: 2,
     },
+    duplicateContent: { severity: 'warning', threshold: 0.9, minWords: 200 },
   },
 });
 ```
@@ -157,20 +158,21 @@ output directory** (e.g. `blog/hello/index.html`).
 Set a rule to `false` to disable it, `true` to enable it with defaults, or pass
 an object to override individual options.
 
-| Rule               | Default severity | What it checks                                                                                                                                                                                                                                                                                                                                                              |
-| ------------------ | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`            | error            | `<title>` exists and its length is between `minLength` and `maxLength` chars. With `checkDuplicates`, the same title on two pages fails the build.                                                                                                                                                                                                                          |
-| `metaDescription`  | error            | `<meta name="description">` exists and its length is between `minLength` and `maxLength` chars.                                                                                                                                                                                                                                                                             |
-| `headingHierarchy` | error            | Exactly one `<h1>` (`requireSingleH1`); no skipped levels such as `h2` → `h4` (`enforceNoSkips`); optional `requireH1First`.                                                                                                                                                                                                                                                |
-| `semanticHtml`     | error            | At least `minLandmarks` distinct landmark tags from `landmarkTags` (or their ARIA-role equivalents) are present.                                                                                                                                                                                                                                                            |
-| `imageAlt`         | error            | Every `<img>` has an `alt` attribute (`alt=""` is allowed for decorative images; a missing attribute is not).                                                                                                                                                                                                                                                               |
-| `canonical`        | error            | Exactly one `<link rel="canonical">` with a non-empty `href`. With `requireAbsolute`, the href must be an absolute http(s) URL.                                                                                                                                                                                                                                             |
-| `anchorText`       | warning          | `<a>` elements do not use generic text from `bannedPhrases`, and links are not left without any accessible name.                                                                                                                                                                                                                                                            |
-| `internalLinks`    | error            | Every internal `<a href>` resolves to a page or asset that exists in the build output, matched the way a static host serves files (`/blog/` and `/blog` both resolve to `blog/index.html`). With `checkFragments`, a same-page `#section` link must match an `id` or `<a name>` on the page. External links, `mailto:`/`tel:`, `href="#"` and query-only links are ignored. |
-| `jsDependency`     | error            | `<body>` contains at least `minTextLength` characters of visible text (a near-empty body suggests client-only rendering).                                                                                                                                                                                                                                                   |
-| `robots`           | warning          | Warns (configurable via `severity`) when `<meta name="robots">` / `googlebot` contains one of `directives` (`noindex` / `nofollow`).                                                                                                                                                                                                                                        |
-| `duplicateId`      | error            | No `id` attribute value is used more than once in a document.                                                                                                                                                                                                                                                                                                               |
-| `imageSize`        | warning          | Local images weigh no more than `maxBytes`. The weight check covers `<img src>` and every URL in an `<img srcset>` or `<picture>` `<source srcset>`. Images also carry `width`/`height` (`requireDimensions`) so the browser can reserve space and avoid layout shift. Page speed is a ranking signal.                                                                      |
+| Rule               | Default severity | What it checks                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`            | error            | `<title>` exists and its length is between `minLength` and `maxLength` chars. With `checkDuplicates`, the same title on two pages fails the build.                                                                                                                                                                                                                                     |
+| `metaDescription`  | error            | `<meta name="description">` exists and its length is between `minLength` and `maxLength` chars.                                                                                                                                                                                                                                                                                        |
+| `headingHierarchy` | error            | Exactly one `<h1>` (`requireSingleH1`); no skipped levels such as `h2` → `h4` (`enforceNoSkips`); optional `requireH1First`.                                                                                                                                                                                                                                                           |
+| `semanticHtml`     | error            | At least `minLandmarks` distinct landmark tags from `landmarkTags` (or their ARIA-role equivalents) are present.                                                                                                                                                                                                                                                                       |
+| `imageAlt`         | error            | Every `<img>` has an `alt` attribute (`alt=""` is allowed for decorative images; a missing attribute is not).                                                                                                                                                                                                                                                                          |
+| `canonical`        | error            | Exactly one `<link rel="canonical">` with a non-empty `href`. With `requireAbsolute`, the href must be an absolute http(s) URL.                                                                                                                                                                                                                                                        |
+| `anchorText`       | warning          | `<a>` elements do not use generic text from `bannedPhrases`, and links are not left without any accessible name.                                                                                                                                                                                                                                                                       |
+| `internalLinks`    | error            | Every internal `<a href>` resolves to a page or asset that exists in the build output, matched the way a static host serves files (`/blog/` and `/blog` both resolve to `blog/index.html`). With `checkFragments`, a same-page `#section` link must match an `id` or `<a name>` on the page. External links, `mailto:`/`tel:`, `href="#"` and query-only links are ignored.            |
+| `jsDependency`     | error            | `<body>` contains at least `minTextLength` characters of visible text (a near-empty body suggests client-only rendering).                                                                                                                                                                                                                                                              |
+| `robots`           | warning          | Warns (configurable via `severity`) when `<meta name="robots">` / `googlebot` contains one of `directives` (`noindex` / `nofollow`).                                                                                                                                                                                                                                                   |
+| `duplicateId`      | error            | No `id` attribute value is used more than once in a document.                                                                                                                                                                                                                                                                                                                          |
+| `imageSize`        | warning          | Local images weigh no more than `maxBytes`. The weight check covers `<img src>` and every URL in an `<img srcset>` or `<picture>` `<source srcset>`. Images also carry `width`/`height` (`requireDimensions`) so the browser can reserve space and avoid layout shift. Page speed is a ranking signal.                                                                                 |
+| `duplicateContent` | warning          | Flags pages whose visible text is near-identical to another page's: the Jaccard overlap of their five-word runs is at or above `threshold` (default `0.9`). Catches templated listing pages and thin tag/location pages that the exact-match `title` duplicate check misses. Pages shorter than `minWords` words are ignored; the comparison is pairwise and skipped above `maxPages`. |
 
 #### Rule option reference
 
@@ -227,6 +229,13 @@ interface ImageSizeRuleOptions {
   maxScaleFactor: number; // default 2 (0 disables the scale check)
   extensions: string[]; // default ['png','jpg','jpeg','gif','webp']
 }
+
+interface DuplicateContentRuleOptions {
+  severity: 'error' | 'warning'; // default 'warning'
+  threshold: number; // default 0.9; text similarity (0 to 1) that counts as a duplicate
+  minWords: number; // default 200; shorter pages are ignored
+  maxPages: number; // default 1500; skip the check above this many pages
+}
 ```
 
 > **Note:** `imageSize` reads the referenced files from the build output on disk.
@@ -243,6 +252,13 @@ interface ImageSizeRuleOptions {
 > fetches anything or follows external URLs. Cross-page fragments are not
 > verified beyond the target page existing. Use `ignore` for links that only
 > exist at runtime, such as redirects or server routes.
+
+> **Note:** `duplicateContent` compares the visible `<body>` text of every page
+> against every other, so its cost grows with the square of the page count. The
+> `maxPages` guard (default 1500) skips the check on larger sites and reports a
+> single notice instead; raise it if you want the check to run anyway. Paginated
+> lists and other pages that are near-identical on purpose will trip it. Exclude
+> them via the top-level `exclude` option or set the rule to `false`.
 
 ---
 
@@ -296,8 +312,9 @@ seoEnforcer({
    anything matched by `exclude`. It also indexes every file in the output
    directory, pages and assets, so `internalLinks` can resolve link targets.
 4. Each HTML file is read and parsed once with `node-html-parser`.
-5. All enabled rules run against the parsed document. Titles are also recorded
-   globally for the cross-page duplicate check.
+5. All enabled rules run against the parsed document. Each page's `<title>` and
+   visible text are also recorded for the cross-page `title` and
+   `duplicateContent` checks, which run once every file has been parsed.
 6. A grouped report is printed to `stderr`.
 7. If the configured `failOn` threshold is reached, the integration sets
    `process.exitCode = 1` and throws, so `astro build` fails.

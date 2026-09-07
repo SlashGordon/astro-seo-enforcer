@@ -42,3 +42,7 @@ export {
   semanticHtmlRule,
   titleRule,
 };
+
+// Cross-page check: run by the runner after every file is parsed, not per page.
+export { findDuplicateContent } from './duplicate-content.js';
+export type { DuplicateContentPage } from './duplicate-content.js';
