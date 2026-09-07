@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-07
+
+### Added
+
+- `duplicateContent` rule (warning by default) that flags pages whose visible
+  text is near-identical to another page's. Similarity is the Jaccard overlap of
+  the two pages' five-word runs; a pair at or above `threshold` (default `0.9`)
+  is reported on both pages with the percentage. This catches templated listing
+  pages and thin tag/location pages that keep distinct titles, which the
+  exact-match `title` duplicate check misses. Pages shorter than `minWords`
+  (default 200) are ignored, and the comparison is pairwise, so it is skipped
+  with a single notice above `maxPages` (default 1500).
+
 ## [1.2.0] - 2026-09-07
 
 ### Added
@@ -98,7 +111,8 @@ First stable release.
 - Astro `^3 || ^4 || ^5 || ^6 || ^7`.
 - Node.js `>= 18.14.1`.
 
-[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.1.0...v1.1.1
