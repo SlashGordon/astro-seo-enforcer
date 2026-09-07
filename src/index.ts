@@ -105,6 +105,10 @@ export type {
   ImageSizeRuleOptions,
   InternalLinksRuleOptions,
   DuplicateContentRuleOptions,
+  ThinContentRuleOptions,
+  StructuredDataRuleOptions,
+  OrphanPagesRuleOptions,
+  SitemapCoverageRuleOptions,
 } from './config.js';
 export type { Violation, Severity, PageContext, Rule } from './types.js';
 export { formatReport } from './reporter.js';

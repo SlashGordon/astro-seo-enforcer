@@ -31,6 +31,11 @@ export interface PageContext {
   /** Normalised visible text content of `<body>` (script/style/head stripped). */
   bodyText: string;
   /**
+   * Normalised visible text of the first `<main>` / `<article>` / `role="main"`
+   * region, or `undefined` when the page declares no such region.
+   */
+  mainText: string | undefined;
+  /**
    * Every file in the build output, as POSIX paths relative to `distPath`
    * (HTML pages *and* static assets). Used to resolve internal links.
    */

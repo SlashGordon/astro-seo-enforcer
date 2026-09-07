@@ -93,15 +93,14 @@ const NON_VISIBLE_TAGS = new Set([
 ]);
 
 /**
- * Extract the visible text of `<body>` (or the whole document if there is no
- * body), with scripts, styles and other non-visible content removed.
+ * Visible text of a single element subtree, with scripts, styles and other
+ * non-visible content removed and whitespace collapsed.
  */
-export function extractVisibleText(root: HTMLElement): string {
-  const body = root.querySelector('body') ?? root;
+export function collectVisibleText(element: HTMLElement): string {
   let buffer = '';
 
-  const visit = (element: HTMLElement): void => {
-    for (const child of element.childNodes) {
+  const visit = (node: HTMLElement): void => {
+    for (const child of node.childNodes) {
       if (child.nodeType === NodeType.TEXT_NODE) {
         buffer += ` ${(child as TextNode).rawText}`;
       } else if (child.nodeType === NodeType.ELEMENT_NODE) {
@@ -112,6 +111,28 @@ export function extractVisibleText(root: HTMLElement): string {
     }
   };
 
-  visit(body);
+  visit(element);
   return decodeEntities(buffer).replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Extract the visible text of `<body>` (or the whole document if there is no
+ * body), with scripts, styles and other non-visible content removed.
+ */
+export function extractVisibleText(root: HTMLElement): string {
+  return collectVisibleText(root.querySelector('body') ?? root);
+}
+
+/**
+ * Visible text of the page's primary content region — the first `<main>`,
+ * `<article>` or `role="main"` element. Returns `undefined` when the page
+ * declares no such region, so callers can tell "no main content" apart from
+ * "empty main content".
+ */
+export function extractMainText(root: HTMLElement): string | undefined {
+  const region =
+    root.querySelector('main') ??
+    root.querySelector('article') ??
+    root.querySelector('[role="main"]');
+  return region ? collectVisibleText(region) : undefined;
 }

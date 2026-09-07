@@ -9,6 +9,21 @@ interface Props {
 
 const { title, description } = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+// A small piece of valid JSON-LD so the `structuredData` rule has something to
+// parse and approve on every page.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: title,
+  description,
+  url: canonicalURL.href,
+  isPartOf: {
+    '@type': 'WebSite',
+    name: 'astro-seo-enforcer demo',
+    url: new URL('/', Astro.site).href,
+  },
+};
 ---
 
 <!doctype html>
@@ -19,6 +34,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL.href} />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
     <header>

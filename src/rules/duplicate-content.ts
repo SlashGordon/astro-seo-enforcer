@@ -5,7 +5,11 @@ import type { Violation } from '../types.js';
 export interface DuplicateContentPage {
   /** POSIX path of the page relative to the build output directory. */
   file: string;
-  /** Visible `<body>` text of the page (whitespace does not need to be collapsed). */
+  /**
+   * Visible text of the page to fingerprint (whitespace does not need to be
+   * collapsed). The runner passes the `<main>` / `<article>` text when
+   * `scopeToMain` is set and the page has such a region, otherwise `<body>`.
+   */
   text: string;
 }
 
@@ -26,6 +30,11 @@ const SHINGLE_SIZE = 5;
  * `minWords` words are left out, since short pages overlap on nav and footer
  * boilerplate alone. The comparison is pairwise, so it is skipped above
  * `maxPages`.
+ *
+ * A second pass flags any page whose share of shingles unique to it (present on
+ * no other eligible page) falls below `minUniqueRatio`. This catches many-way
+ * templating where every page is close to the set but no single pair reaches
+ * `threshold`.
  */
 export function findDuplicateContent(
   pages: readonly DuplicateContentPage[],
@@ -67,13 +76,42 @@ export function findDuplicateContent(
     }
   }
 
+  // How many of the eligible pages each shingle appears on, for the unique-ratio
+  // pass — this catches many-way templating that no single pair trips the
+  // `threshold` on (e.g. 200 location pages that are each 85% boilerplate).
+  const pagesPerShingle = new Map<string, number>();
+  if (options.minUniqueRatio > 0) {
+    for (const page of eligible) {
+      for (const value of page.shingles) {
+        pagesPerShingle.set(value, (pagesPerShingle.get(value) ?? 0) + 1);
+      }
+    }
+  }
+  const lowUnique = new Map<string, number>();
+  if (options.minUniqueRatio > 0) {
+    for (const page of eligible) {
+      let unique = 0;
+      for (const value of page.shingles) {
+        if (pagesPerShingle.get(value) === 1) unique += 1;
+      }
+      const ratio = unique / page.shingles.size;
+      if (ratio < options.minUniqueRatio) lowUnique.set(page.file, ratio);
+    }
+  }
+
   const violations: Violation[] = [];
-  for (const [file, others] of matches) {
+  for (const file of new Set([...matches.keys(), ...lowUnique.keys()])) {
+    const parts: string[] = [];
+    const others = matches.get(file);
+    if (others) parts.push(`shares most of its text with ${others.join(', ')}`);
+    if (lowUnique.has(file)) {
+      parts.push(`only ${Math.round(lowUnique.get(file)! * 100)}% of its content is unique to it`);
+    }
     violations.push({
       file,
       rule: 'duplicateContent',
       severity: options.severity,
-      message: `Near-duplicate content: this page shares most of its visible text with ${others.join(', ')}.`,
+      message: `Near-duplicate content: this page ${parts.join('; ')}.`,
       hint: 'Give the page its own content, or drop it and point a canonical link at the version you keep.',
     });
   }

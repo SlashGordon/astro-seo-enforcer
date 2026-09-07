@@ -7,10 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.1](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.4.0...v1.4.1) (2026-09-08)
 
-
 ### Bug Fixes
 
-* changelog ([4c9b210](https://github.com/SlashGordon/astro-seo-enforcer/commit/4c9b210ba7b1e6dc00dce7d954f3a8e182a0e509))
+- changelog ([4c9b210](https://github.com/SlashGordon/astro-seo-enforcer/commit/4c9b210ba7b1e6dc00dce7d954f3a8e182a0e509))
 
 ## [1.4.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.3.0...v1.4.0) (2026-09-08)
 
@@ -27,6 +26,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - update README.md, src/config.ts, src/index.ts (+4 more) ([055e644](https://github.com/SlashGordon/astro-seo-enforcer/commit/055e64495c2c8f628803ac73f23a15d882c09871))
 
 ## [Unreleased]
+
+## [1.4.0] - 2026-09-07
+
+A batch of checks aimed at programmatic / templated page sets. Every new finding
+is a **warning**, so nothing here breaks a build unless `failOn: 'warning'`.
+
+### Added
+
+- `thinContent` rule (warning) — flags pages with fewer than `minWords` words
+  (default 250) in their main content. With `scopeToMain` (default) only the
+  first `<main>` / `<article>` / `role="main"` region is counted, so shared nav,
+  header and footer text cannot mask a thin page; pages with no such region fall
+  back to `<body>`. This is the "thin but not empty" tier above `jsDependency`.
+- `structuredData` rule (warning) — every `<script type="application/ld+json">`
+  must contain valid JSON. `requireTypes` asserts that given `@type` values
+  (e.g. `BreadcrumbList`) appear in the page's JSON-LD; `require` flags pages
+  that ship none. Handles `@graph` and array `@type`.
+- `orphanPages` check (warning) — HTML pages that no other page links to and no
+  sitemap lists. `entryPoints` (default `['index.html']`) are always reachable;
+  `ignore` skips intentional stand-alone pages.
+- `sitemapCoverage` check (warning) — cross-checks the build against every
+  `sitemap*.xml` in the output (sitemap index included): every `<loc>` must
+  resolve to a real file, every indexable page should be listed
+  (`requireInSitemap`), and a page must not be both `noindex` and in a sitemap.
+- `metaDescription.checkDuplicates` (default `true`) — the same meta description
+  on two or more pages is now a warning, mirroring `title.checkDuplicates`.
+- `headingHierarchy.checkDuplicateH1` (default `true`) — the same `<h1>` text on
+  two or more pages is a warning (keyword cannibalisation).
+- `duplicateContent.minUniqueRatio` (default `0.2`) — a second pass that flags a
+  page when less than this fraction of its five-word runs is unique to it,
+  catching many-way templating that no single pair trips `threshold` on. Set to
+  `0` to disable.
+- `PageContext.mainText` — the visible text of the page's main-content region,
+  or `undefined` when it has none. Exposed for custom rules.
+
+### Changed
+
+- `duplicateContent` now compares the `<main>` / `<article>` region rather than
+  the whole `<body>` (`scopeToMain`, default `true`), so shared nav and footer
+  boilerplate no longer inflates the similarity score. Pages with no such region
+  fall back to `<body>` as before.
+- `internalLinks` broken-`#fragment` findings now use a separate
+  `fragmentSeverity` (default `warning`). Anchors rendered by client-side
+  JavaScript are absent from the built HTML, so a failed fragment check should
+  not fail a build over a link that works. Missing-page/asset links stay at
+  `severity` (`error`).
 
 ## [1.3.0] - 2026-09-07
 

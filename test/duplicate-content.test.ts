@@ -108,4 +108,39 @@ describe('findDuplicateContent', () => {
     expect(found).toHaveLength(1);
     expect(found[0]?.message).toContain('maxPages limit of 5');
   });
+
+  describe('minUniqueRatio pass', () => {
+    // ~195 words of shared template + ~30 swapped per page: no single pair
+    // reaches the 0.9 threshold, but well under 20% of each page is its own.
+    const templated = (slug: string) => `${words(195)} ${words(30, slug)}`;
+    const pages = ['a', 'b', 'c', 'd'].map((s) => ({ file: `${s}.html`, text: templated(s) }));
+
+    it('flags pages that are almost all shared boilerplate', () => {
+      const found = run(pages);
+      expect(found.map((v) => v.file).sort()).toEqual(['a.html', 'b.html', 'c.html', 'd.html']);
+      expect(found[0]?.message).toContain('% of its content is unique');
+    });
+
+    it('is disabled by minUniqueRatio: 0', () => {
+      expect(run(pages, { minUniqueRatio: 0 })).toEqual([]);
+    });
+
+    it('leaves genuinely distinct pages alone', () => {
+      const distinct = ['a', 'b', 'c'].map((s) => ({ file: `${s}.html`, text: words(220, s) }));
+      expect(run(distinct, { minUniqueRatio: 0.2 })).toEqual([]);
+    });
+
+    it('merges the pairwise and unique-ratio findings into one message per page', () => {
+      const found = run([
+        { file: 'a.html', text: words(220) },
+        { file: 'b.html', text: words(220) },
+        { file: 'c.html', text: `${words(214)} ${words(6, 'c')}` },
+      ]);
+      const a = found.find((v) => v.file === 'a.html');
+      expect(a?.message).toContain('shares most of its text with');
+      expect(a?.message).toContain('% of its content is unique');
+      // still one violation per file, not two
+      expect(found.filter((v) => v.file === 'a.html')).toHaveLength(1);
+    });
+  });
 });

@@ -8,6 +8,9 @@ const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
  * - exactly one `<h1>` (configurable),
  * - optionally the first heading must be the `<h1>`,
  * - heading levels must not jump by more than one step.
+ *
+ * Cross-page duplicate `<h1>` detection is handled by the runner (it needs to
+ * see every page first), driven by the `checkDuplicateH1` option.
  */
 export const headingHierarchyRule: Rule = (ctx) => {
   const options = ctx.config.rules.headingHierarchy;

@@ -1,6 +1,11 @@
 import type { Rule } from '../types.js';
 
-/** Requires a `<meta name="description">` whose length is within the range. */
+/**
+ * Requires a `<meta name="description">` whose length is within the range.
+ *
+ * Cross-page duplicate detection is handled by the runner, driven by the
+ * `checkDuplicates` option.
+ */
 export const metaDescriptionRule: Rule = (ctx) => {
   const options = ctx.config.rules.metaDescription;
   if (!options) return [];

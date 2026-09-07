@@ -11,13 +11,36 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     Every page in this site is written to satisfy the default rule set: a unique
     title of the right length, a meta description within range, exactly one
     <code>&lt;h1&gt;</code>, a sensible heading outline, semantic landmarks and
-    link text that makes sense on its own.
+    link text that makes sense on its own. The site is deliberately tiny, but it
+    exercises the parts of the integration that only show up once several real
+    pages exist side by side on disk.
   </p>
   <h2>What the build does</h2>
   <p>
     The integration parses the generated HTML inside the
-    <code>astro:build:done</code> hook. If any rule fails, <code>astro build</code>
-    exits with a non-zero status and the CI job turns red. See the
-    <a href="/about/">project background</a> for the full story.
+    <code>astro:build:done</code> hook. It reads the files Astro wrote to the
+    output directory, not the source <code>.astro</code> components, so what it
+    checks is exactly what a crawler would download. If any rule fails,
+    <code>astro build</code> exits with a non-zero status and the continuous
+    integration job turns red. Because this demo sets
+    <code>failOn: "warning"</code>, even advisory findings stop the build, which
+    keeps the example pages honest.
+  </p>
+  <h2>Why the pages carry real copy</h2>
+  <p>
+    Several checks only make sense against a page with genuine content. The
+    thin-content rule counts the words inside the main region and complains when
+    a page reads like a template with a variable swapped in. The near-duplicate
+    check compares the main content of every page against every other and flags
+    the ones that share almost all of their text. To keep those rules quiet, each
+    route here carries a few paragraphs of its own prose rather than a single
+    placeholder sentence.
+  </p>
+  <h2>Where to go next</h2>
+  <p>
+    Read the <a href="/about/">project background</a> for the full story of why
+    the integration exists, or open the <a href="/blog/first-post/">first
+    article</a> to see a nested route pass the same checks from one level deeper
+    in the directory tree.
   </p>
 </BaseLayout>
