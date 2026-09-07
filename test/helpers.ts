@@ -9,6 +9,7 @@ export function makeContext(
   html: string,
   userConfig: SeoEnforcerUserConfig = {},
   file = 'index.html',
+  siteFiles: Iterable<string> = [],
 ): PageContext {
   const root = parse(html, {
     lowerCaseTagName: true,
@@ -22,6 +23,7 @@ export function makeContext(
     distPath: '/virtual',
     root,
     bodyText: extractVisibleText(root),
+    siteFiles: new Set(siteFiles),
     config: resolveConfig(userConfig),
   };
 }
@@ -35,10 +37,10 @@ export const CLEAN_PAGE = `<!doctype html>
 <link rel="canonical" href="https://example.com/">
 </head>
 <body>
-<header><nav><a href="/about">About the widgets team</a></nav></header>
+<header><nav><a href="#details">Jump to the widget details</a></nav></header>
 <main>
 <h1>Widgets</h1>
-<h2>Details</h2>
+<h2 id="details">Details</h2>
 <p>Plenty of real crawlable text content here that is clearly not hidden behind any client side JavaScript whatsoever.</p>
 <img src="/w.png" alt="A widget" width="200" height="150">
 </main>

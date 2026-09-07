@@ -58,6 +58,23 @@ export interface RobotsRuleOptions {
   directives: string[];
 }
 
+export interface InternalLinksRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /**
+   * Also verify that a same-page `#fragment` link points at an element with a
+   * matching `id` (or `<a name>`) in the current document. Cross-page fragments
+   * are not resolved — only the target page's existence is checked.
+   */
+  checkFragments: boolean;
+  /**
+   * Raw `href` values to skip: a plain string matches exactly, a `RegExp` is
+   * tested against the attribute value. Useful for links resolved at runtime
+   * (redirects, server routes) that do not exist as files in the build output.
+   */
+  ignore: Array<string | RegExp>;
+}
+
 export interface ImageSizeRuleOptions {
   /** Severity emitted for every finding this rule produces. */
   severity: Severity;
@@ -95,6 +112,7 @@ export interface RulesConfig {
   robots: boolean | Partial<RobotsRuleOptions>;
   duplicateId: boolean;
   imageSize: boolean | Partial<ImageSizeRuleOptions>;
+  internalLinks: boolean | Partial<InternalLinksRuleOptions>;
 }
 
 export interface SeoEnforcerUserConfig {
@@ -136,6 +154,7 @@ export interface ResolvedConfig {
     robots: false | RobotsRuleOptions;
     duplicateId: boolean;
     imageSize: false | ImageSizeRuleOptions;
+    internalLinks: false | InternalLinksRuleOptions;
   };
 }
 
@@ -191,6 +210,12 @@ export const DEFAULT_ROBOTS: RobotsRuleOptions = {
   directives: ['noindex', 'nofollow'],
 };
 
+export const DEFAULT_INTERNAL_LINKS: InternalLinksRuleOptions = {
+  severity: 'error',
+  checkFragments: true,
+  ignore: [],
+};
+
 export const DEFAULT_IMAGE_SIZE: ImageSizeRuleOptions = {
   severity: 'warning',
   // ~200 KB. Above this a single image starts to noticeably hurt LCP / load time.
@@ -240,6 +265,7 @@ export function resolveConfig(userConfig: SeoEnforcerUserConfig = {}): ResolvedC
       robots: resolveRule(rules.robots, DEFAULT_ROBOTS),
       duplicateId: rules.duplicateId !== false,
       imageSize: resolveRule(rules.imageSize, DEFAULT_IMAGE_SIZE),
+      internalLinks: resolveRule(rules.internalLinks, DEFAULT_INTERNAL_LINKS),
     },
   };
 }

@@ -24,7 +24,12 @@ export interface RunResult {
 
 /** Parse every HTML file under `distPath` and run all enabled rules against it. */
 export async function runSeoChecks({ distPath, config }: RunOptions): Promise<RunResult> {
-  const files = await collectHtmlFiles(distPath);
+  const allFiles = await collectFiles(distPath);
+  // Every output path (pages + assets), so rules can resolve internal links.
+  const siteFiles = new Set(
+    allFiles.map((absolutePath) => toPosix(path.relative(distPath, absolutePath))),
+  );
+  const files = allFiles.filter((absolutePath) => absolutePath.toLowerCase().endsWith('.html'));
   const violations: Violation[] = [];
   const titleRegistry = new Map<string, string[]>();
   let scannedFiles = 0;
@@ -71,6 +76,7 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
       distPath,
       root,
       bodyText: extractVisibleText(root),
+      siteFiles,
       config,
     };
 
@@ -131,8 +137,8 @@ function severityRank(severity: Violation['severity']): number {
   return severity === 'error' ? 0 : 1;
 }
 
-/** Recursively collect every `*.html` file under `dir` (sorted, absolute paths). */
-async function collectHtmlFiles(dir: string): Promise<string[]> {
+/** Recursively collect every file under `dir` (sorted, absolute paths). */
+async function collectFiles(dir: string): Promise<string[]> {
   const results: string[] = [];
 
   async function walk(current: string): Promise<void> {
@@ -146,7 +152,7 @@ async function collectHtmlFiles(dir: string): Promise<string[]> {
       const full = path.join(current, entry.name);
       if (entry.isDirectory()) {
         await walk(full);
-      } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.html')) {
+      } else if (entry.isFile()) {
         results.push(full);
       }
     }

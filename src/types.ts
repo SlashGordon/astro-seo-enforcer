@@ -30,6 +30,11 @@ export interface PageContext {
   root: HTMLElement;
   /** Normalised visible text content of `<body>` (script/style/head stripped). */
   bodyText: string;
+  /**
+   * Every file in the build output, as POSIX paths relative to `distPath`
+   * (HTML pages *and* static assets). Used to resolve internal links.
+   */
+  siteFiles: ReadonlySet<string>;
   /** Fully resolved configuration. */
   config: ResolvedConfig;
 }

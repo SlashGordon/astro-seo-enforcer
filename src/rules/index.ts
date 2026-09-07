@@ -5,6 +5,7 @@ import { duplicateIdRule } from './duplicate-id.js';
 import { headingHierarchyRule } from './heading-hierarchy.js';
 import { imageAltRule } from './image-alt.js';
 import { imageSizeRule } from './image-size.js';
+import { internalLinksRule } from './internal-links.js';
 import { jsDependencyRule } from './js-dependency.js';
 import { metaDescriptionRule } from './meta-description.js';
 import { robotsRule } from './robots.js';
@@ -21,6 +22,7 @@ export const allRules: Rule[] = [
   imageSizeRule,
   canonicalRule,
   anchorTextRule,
+  internalLinksRule,
   jsDependencyRule,
   robotsRule,
   duplicateIdRule,
@@ -33,6 +35,7 @@ export {
   headingHierarchyRule,
   imageAltRule,
   imageSizeRule,
+  internalLinksRule,
   jsDependencyRule,
   metaDescriptionRule,
   robotsRule,
