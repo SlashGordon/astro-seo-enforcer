@@ -1,7 +1,14 @@
 name: Autofix
 
+# Runs on branch pushes rather than `pull_request` so it never hits the
+# "workflow run required approval" gate that applies to fork / bot PRs —
+# and it can only ever touch branches that live in this repo. Fork
+# contributors run `npm run format` locally instead.
 on:
-  pull_request:
+  push:
+    branches-ignore:
+      - main
+      - "dependabot/**"
 
 permissions:
   contents: write
@@ -9,13 +16,8 @@ permissions:
 jobs:
   prettier:
     runs-on: ubuntu-latest
-    # Forks hand this workflow a read-only token, so it can't push the fix
-    # back; a fork contributor runs `npm run format` locally instead.
-    if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
 
       - uses: actions/setup-node@v7
         with:
@@ -26,6 +28,8 @@ jobs:
 
       - run: npm run format
 
+      # No-op when nothing changed; the push it makes uses GITHUB_TOKEN,
+      # which by design does not retrigger this workflow.
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'style: apply prettier'
+          commit_message: "style: apply prettier"
