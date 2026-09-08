@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.3.0...v1.4.0) (2026-09-08)
+
+
+### Features
+
+* intital commit ([73742e2](https://github.com/SlashGordon/astro-seo-enforcer/commit/73742e2a615eba3d26a46525ce43a273b91596fd))
+* **rules:** add duplicateContent rule for near-identical pages ([6c17005](https://github.com/SlashGordon/astro-seo-enforcer/commit/6c170051b969b8751525ebb4f728665ee1c575e6))
+* **rules:** add imageSize rule for page-speed optimization ([64ef8d6](https://github.com/SlashGordon/astro-seo-enforcer/commit/64ef8d620bd52ecb7e6b6bd348bb88f3e1506632))
+
+
+### Bug Fixes
+
+* added some keywords ([4f0f43d](https://github.com/SlashGordon/astro-seo-enforcer/commit/4f0f43dcb9efd71c6b2b6f2dc2f37ee9f821237f))
+* imageSize now applies the maxBytes weight check to responsive image ([f925d16](https://github.com/SlashGordon/astro-seo-enforcer/commit/f925d1625b025d4b33549ffb74187ce4549e671d))
+* update README.md, src/config.ts, src/index.ts (+4 more) ([055e644](https://github.com/SlashGordon/astro-seo-enforcer/commit/055e64495c2c8f628803ac73f23a15d882c09871))
+
 ## [Unreleased]
 
 ## [1.3.0] - 2026-09-07
