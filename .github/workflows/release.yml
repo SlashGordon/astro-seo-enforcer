@@ -2,18 +2,39 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 
 permissions:
-  contents: read
-  id-token: write # OIDC — npm trusted publishing + provenance
+  contents: write
+  pull-requests: write
 
 jobs:
-  publish:
+  # Maintains a "release PR" that bumps package.json + CHANGELOG.md from the
+  # Conventional Commit history. Merging that PR tags the release and creates
+  # the GitHub Release, which sets `release_created` for the publish job below.
+  release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Publish to npm only when release-please just cut a new release.
+  publish:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC — npm trusted publishing + provenance
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
 
       - uses: actions/setup-node@v4
         with:
@@ -29,8 +50,8 @@ jobs:
       - name: Tag matches package.json version
         run: |
           pkg="v$(node -p "require('./package.json').version")"
-          echo "git tag=$GITHUB_REF_NAME  package.json=$pkg"
-          test "$pkg" = "$GITHUB_REF_NAME"
+          echo "git tag=${{ needs.release-please.outputs.tag_name }}  package.json=$pkg"
+          test "$pkg" = "${{ needs.release-please.outputs.tag_name }}"
 
       - run: npm ci
       - run: npm run typecheck && npm test && npm run build
