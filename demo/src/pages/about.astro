@@ -8,18 +8,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 >
   <h1>About this demo</h1>
   <p>
-    This is a second route, so the duplicate-title rule has something real to
-    compare against. Its title and description differ from every other page here.
+    This is a second route, so the duplicate-title, duplicate-description and
+    duplicate-heading rules have something real to compare against. Its title,
+    meta description and <code>&lt;h1&gt;</code> differ from every other page in
+    the site, which is exactly what those cross-page checks want to see on a
+    templated set of pages.
   </p>
   <h2>How the check runs</h2>
   <p>
     After Astro writes the static files, the integration walks the output
-    directory, parses each HTML document once and runs the enabled rules against
-    it. Titles are also collected globally to detect duplicates across pages.
+    directory, indexes every page and asset, and parses each HTML document once
+    with a lightweight parser. Per-page rules run immediately. A handful of
+    checks are deferred until every file has been seen: duplicate titles,
+    descriptions and headings, near-duplicate bodies, orphan pages that nothing
+    links to, and coverage against the generated XML sitemap.
   </p>
   <h3>Failure behaviour</h3>
   <p>
-    On a violation the build prints a grouped, readable report and exits with a
-    non-zero status code. Return to the <a href="/">demo home page</a>.
+    On a violation the build prints a grouped, colourised report to standard
+    error and exits with a non-zero status code. In this demo the threshold is
+    set to <code>warning</code>, so any finding at all is enough to fail the
+    build. That is stricter than the default, where only errors stop a build and
+    warnings are printed for you to triage at your own pace.
+  </p>
+  <h3>What this route adds</h3>
+  <p>
+    Beyond giving the duplicate checks a partner, this page contributes an inbound
+    link to the home page and to the nested article, so the orphan-page check can
+    confirm that the internal link graph actually connects. It also carries the
+    same JSON-LD block as every other route, which keeps the structured-data rule
+    satisfied that the markup is present and parses cleanly. Return to the
+    <a href="/">demo home page</a> or continue to the
+    <a href="/blog/first-post/">first article</a>.
+  </p>
+  <h3>Keeping the example honest</h3>
+  <p>
+    Each time the rule set grows, this demo grows with it: a new check that would
+    fire on these pages is a signal that the pages, not the check, need attention.
+    That is the whole point of wiring the integration into the demo build at the
+    strictest threshold rather than trusting the unit tests alone.
   </p>
 </BaseLayout>

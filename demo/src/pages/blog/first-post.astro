@@ -9,13 +9,34 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   <h1>Writing pages that pass every SEO rule</h1>
   <p>
     This article lives at a nested path, so the recursive directory traversal in
-    the integration is exercised on more than just the site root.
+    the integration is exercised on more than just the site root. The canonical
+    URL, the heading outline and the internal-link resolver all have to work the
+    same way one level down as they do at the top of the tree.
   </p>
   <h2>The short checklist</h2>
   <p>
-    Descriptive link text, exactly one heading at the top level, an absolute
-    canonical URL and enough real text content to prove the page is not an empty
-    client-rendered shell. Continue to the
-    <a href="/about/">about page for this demo</a>.
+    Give the page a descriptive title in the thirty to sixty character range and
+    a meta description between fifty and one hundred and sixty characters. Use
+    exactly one top-level heading and never skip a level on the way down. Emit an
+    absolute canonical URL, which Astro can build for you once the
+    <code>site</code> option is set. Wrap the page in real landmarks so assistive
+    technology and the semantic-HTML rule both find a <code>main</code> region.
+  </p>
+  <h2>Content that earns the ranking</h2>
+  <p>
+    A page also needs enough of its own writing to be worth indexing. Programmatic
+    pages fail here most often: a city name or a product attribute is swapped into
+    an otherwise identical template and the result is a hundred pages that read as
+    one. The thin-content rule and the unique-ratio pass of the near-duplicate
+    check are both aimed at that pattern, so this article carries several
+    paragraphs that appear nowhere else on the site.
+  </p>
+  <h2>Staying in the link graph</h2>
+  <p>
+    Finally, every page should be reachable. This one is linked from the primary
+    navigation and from the body of two other routes, and it appears in the XML
+    sitemap that the build generates. Continue to the
+    <a href="/about/">about page for this demo</a> or head back to the
+    <a href="/">home page</a>.
   </p>
 </BaseLayout>

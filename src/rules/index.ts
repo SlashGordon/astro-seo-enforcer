@@ -10,6 +10,8 @@ import { jsDependencyRule } from './js-dependency.js';
 import { metaDescriptionRule } from './meta-description.js';
 import { robotsRule } from './robots.js';
 import { semanticHtmlRule } from './semantic-html.js';
+import { structuredDataRule } from './structured-data.js';
+import { thinContentRule } from './thin-content.js';
 import { titleRule } from './title.js';
 
 /** All per-page rules, executed in this order for every HTML file. */
@@ -26,6 +28,8 @@ export const allRules: Rule[] = [
   jsDependencyRule,
   robotsRule,
   duplicateIdRule,
+  thinContentRule,
+  structuredDataRule,
 ];
 
 export {
@@ -40,9 +44,19 @@ export {
   metaDescriptionRule,
   robotsRule,
   semanticHtmlRule,
+  structuredDataRule,
+  thinContentRule,
   titleRule,
 };
 
-// Cross-page check: run by the runner after every file is parsed, not per page.
+// Cross-page checks: run by the runner after every file is parsed, not per page.
 export { findDuplicateContent } from './duplicate-content.js';
 export type { DuplicateContentPage } from './duplicate-content.js';
+export { findOrphanPages } from './orphan-pages.js';
+export type { OrphanPagesInput } from './orphan-pages.js';
+export { findSitemapCoverage, extractLocs } from './sitemap-coverage.js';
+export type {
+  SitemapCoverageInput,
+  SitemapCoverageResult,
+  SitemapDoc,
+} from './sitemap-coverage.js';

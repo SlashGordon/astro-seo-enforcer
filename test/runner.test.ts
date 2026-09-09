@@ -26,6 +26,11 @@ async function write(relPath: string, contents: string): Promise<void> {
 describe('runSeoChecks', () => {
   it('reports zero violations for a clean site', async () => {
     await write('index.html', CLEAN_PAGE);
+    await write(
+      'sitemap.xml',
+      '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
+        '<url><loc>https://example.com/</loc></url></urlset>',
+    );
 
     const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
 
@@ -70,7 +75,7 @@ describe('runSeoChecks', () => {
       config: resolveConfig({ rules: { title: { checkDuplicates: false } } }),
     });
 
-    expect(result.violations).toEqual([]);
+    expect(result.violations.some((v) => v.rule === 'title')).toBe(false);
   });
 
   it('flags near-duplicate content across pages with distinct titles', async () => {
@@ -143,6 +148,165 @@ describe('runSeoChecks', () => {
     const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
     expect(result.scannedFiles).toBe(0);
     expect(result.violations).toEqual([]);
+  });
+});
+
+describe('programmatic-SEO checks', () => {
+  const w = (n: number, prefix = 'w'): string =>
+    Array.from({ length: n }, (_, i) => `${prefix}${i}`).join(' ');
+
+  // Deliberately large shared chrome — the exact "the nav and footer are most of
+  // the page" shape that trips naive whole-body duplicate detection.
+  const CHROME_HEAD = `<header><nav>${w(120, 'nav')}</nav></header>`;
+  const CHROME_FOOT = `<footer>${w(120, 'foot')} copyright</footer>`;
+
+  interface PageParts {
+    key?: string;
+    title?: string;
+    desc?: string;
+    h1?: string;
+    main?: string;
+    head?: string;
+  }
+
+  const mkPage = ({
+    key = 'k',
+    title = `A sufficiently descriptive page title about ${key}`,
+    desc = `A meta description for ${key} that is comfortably past the fifty character minimum length.`,
+    h1 = `Heading ${key}`,
+    main = `<p>${w(260, key)}</p>`,
+    head = '',
+  }: PageParts = {}): string =>
+    `<!doctype html><html lang="en"><head><title>${title}</title>` +
+    `<meta name="description" content="${desc}">` +
+    `<link rel="canonical" href="https://example.com/${key}">${head}</head>` +
+    `<body>${CHROME_HEAD}<main><h1>${h1}</h1>${main}</main>${CHROME_FOOT}</body></html>`;
+
+  const dupeContent = (vs: { rule: string }[]) => vs.filter((v) => v.rule === 'duplicateContent');
+
+  it('does not flag shared header/footer as duplicate content when the main content differs', async () => {
+    await write('a.html', mkPage({ key: 'alpha', main: `<p>${w(240, 'alpha')}</p>` }));
+    await write('b.html', mkPage({ key: 'beta', main: `<p>${w(240, 'beta')}</p>` }));
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+
+    expect(dupeContent(result.violations)).toEqual([]);
+  });
+
+  it('would flag those same pages if the comparison were not scoped to <main>', async () => {
+    // Tiny distinct main, huge identical chrome: with scopeToMain off the pages
+    // read as near-duplicates; with it on (the default) they are not compared.
+    const pages = {
+      'a.html': mkPage({ key: 'a', main: `<p>${w(40, 'a')}</p>` }),
+      'b.html': mkPage({ key: 'b', main: `<p>${w(40, 'b')}</p>` }),
+    };
+    for (const [name, html] of Object.entries(pages)) await write(name, html);
+
+    const scoped = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+    expect(dupeContent(scoped.violations)).toEqual([]);
+
+    const unscoped = await runSeoChecks({
+      distPath: dir,
+      config: resolveConfig({
+        rules: { duplicateContent: { scopeToMain: false, minWords: 50 } },
+      }),
+    });
+    expect(
+      dupeContent(unscoped.violations)
+        .map((v) => v.file)
+        .sort(),
+    ).toEqual(['a.html', 'b.html']);
+  });
+
+  it('does not let header/footer text lift a thin page over the word floor', async () => {
+    // ~240 words of chrome, only 30 in <main>.
+    await write('thin.html', mkPage({ key: 'thin', main: `<p>${w(30, 'thin')}</p>` }));
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+
+    const thin = result.violations.filter((v) => v.rule === 'thinContent');
+    expect(thin).toHaveLength(1);
+    // ~32 words counted (30 in the <p> + the <h1>), proving the ~240 words of
+    // header/footer chrome were left out.
+    const counted = Number(thin[0]?.message.match(/holds (\d+) word/)?.[1]);
+    expect(counted).toBeGreaterThan(0);
+    expect(counted).toBeLessThan(60);
+    expect(thin[0]?.message).toContain('main content');
+  });
+
+  it('flags a duplicate meta description across pages', async () => {
+    const desc =
+      'One meta description reused verbatim on two different pages, which is over fifty chars.';
+    await write('a.html', mkPage({ key: 'a', desc }));
+    await write('b.html', mkPage({ key: 'b', desc }));
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+
+    const dupes = result.violations.filter(
+      (v) => v.rule === 'metaDescription' && v.message.includes('Duplicate'),
+    );
+    expect(new Set(dupes.map((v) => v.file))).toEqual(new Set(['a.html', 'b.html']));
+    expect(dupes.every((v) => v.severity === 'warning')).toBe(true);
+  });
+
+  it('flags a duplicate <h1> across pages', async () => {
+    await write('a.html', mkPage({ key: 'a', h1: 'Best Widgets in Austin' }));
+    await write('b.html', mkPage({ key: 'b', h1: 'Best Widgets in Austin' }));
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+
+    const dupes = result.violations.filter(
+      (v) => v.rule === 'headingHierarchy' && v.message.includes('Duplicate <h1>'),
+    );
+    expect(new Set(dupes.map((v) => v.file))).toEqual(new Set(['a.html', 'b.html']));
+  });
+
+  it('flags an orphan page and spares linked and entry pages', async () => {
+    await write(
+      'index.html',
+      mkPage({ key: 'home', main: `<p>${w(260, 'home')} <a href="/a/">see a</a></p>` }),
+    );
+    await write('a/index.html', mkPage({ key: 'a' }));
+    await write('lonely/index.html', mkPage({ key: 'lonely' }));
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+
+    const orphans = result.violations.filter((v) => v.rule === 'orphanPages');
+    expect(orphans.map((v) => v.file)).toEqual(['lonely/index.html']);
+  });
+
+  it('cross-checks pages against the XML sitemap', async () => {
+    await write('index.html', mkPage({ key: 'home' }));
+    await write('about/index.html', mkPage({ key: 'about' }));
+    await write(
+      'sitemap.xml',
+      '<?xml version="1.0"?><urlset><url><loc>https://example.com/</loc></url>' +
+        '<url><loc>https://example.com/ghost/</loc></url></urlset>',
+    );
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+    const sitemap = result.violations.filter((v) => v.rule === 'sitemapCoverage');
+
+    expect(sitemap.some((v) => v.file === 'sitemap.xml' && v.message.includes('ghost'))).toBe(true);
+    expect(
+      sitemap.some(
+        (v) => v.file === 'about/index.html' && v.message.includes('missing from every sitemap'),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not fail the build on any of the new warning-level checks by default', async () => {
+    await write('a.html', mkPage({ key: 'a', main: '<p>thin</p>', desc: 'short' }));
+    await write('b.html', mkPage({ key: 'a', main: '<p>thin</p>', desc: 'short' }));
+
+    const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
+
+    expect(result.warningCount).toBeGreaterThan(0);
+    const newRules = ['thinContent', 'structuredData', 'orphanPages', 'sitemapCoverage'];
+    for (const rule of newRules) {
+      const found = result.violations.filter((v) => v.rule === rule);
+      expect(found.every((v) => v.severity === 'warning')).toBe(true);
+    }
   });
 });
 
