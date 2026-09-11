@@ -118,11 +118,13 @@ async function writeReports(
 
   if (config.report.json) {
     const target = resolveReportTarget(root, config.report.json);
+    await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.writeFile(target, formatJsonReport(result.violations, summary, result.score), 'utf8');
     logger.info(`Wrote JSON report to ${target}`);
   }
   if (config.report.html) {
     const target = resolveReportTarget(root, config.report.html);
+    await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.writeFile(target, formatHtmlReport(result.violations, summary, result.score), 'utf8');
     logger.info(`Wrote HTML report to ${target}`);
   }
