@@ -1,0 +1,135 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e1a"/>
+      <stop offset="100%" stop-color="#121a2e"/>
+    </linearGradient>
+    <radialGradient id="glowOrange" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff5d01" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ff5d01" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowPurple" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff5d01" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ff5d01" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ff5d01" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#ffffff" fill-opacity="0.05"/>
+    </pattern>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="30"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+  <circle cx="1040" cy="70" r="260" fill="url(#glowOrange)" filter="url(#soft)"/>
+  <circle cx="110" cy="600" r="260" fill="url(#glowPurple)" filter="url(#soft)"/>
+
+  <!-- Title -->
+  <text x="70" y="98" font-size="44" font-weight="800" fill="#ffffff" letter-spacing="-0.5">astro-<tspan fill="#ff8a3d">seo-enforcer</tspan></text>
+  <text x="70" y="134" font-size="19" fill="#94a3b8">SEO violations fail the build. Not your users.</text>
+
+  <rect x="988" y="52" width="142" height="30" rx="15" fill="none" stroke="#334155" stroke-width="1"/>
+  <text x="1059" y="72" font-size="13" fill="#94a3b8" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace">MIT · v1.x</text>
+
+  <!-- Left card: generated HTML output -->
+  <g>
+    <rect x="70" y="230" width="420" height="330" rx="14" fill="#0f1524" stroke="#1f2937" stroke-width="1.5"/>
+    <rect x="70" y="230" width="420" height="34" rx="14" fill="#161d2e"/>
+    <rect x="70" y="252" width="420" height="12" fill="#161d2e"/>
+    <circle cx="92" cy="247" r="6" fill="#ef4444"/>
+    <circle cx="112" cy="247" r="6" fill="#f59e0b"/>
+    <circle cx="132" cy="247" r="6" fill="#22c55e"/>
+    <text x="410" y="251" font-size="12" fill="#64748b" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace">dist/index.html</text>
+
+    <!-- flagged-line highlights -->
+    <rect x="88" y="381" width="384" height="20" fill="#f87171" fill-opacity="0.08"/>
+    <rect x="86" y="381" width="2" height="20" fill="#f87171"/>
+    <rect x="88" y="405" width="384" height="20" fill="#f87171" fill-opacity="0.08"/>
+    <rect x="86" y="405" width="2" height="20" fill="#f87171"/>
+    <rect x="88" y="453" width="384" height="20" fill="#f87171" fill-opacity="0.08"/>
+    <rect x="86" y="453" width="2" height="20" fill="#f87171"/>
+
+    <g font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace" font-size="14">
+      <text x="78" y="304" fill="#475569" text-anchor="end">1</text>
+      <text x="100" y="304" fill="#94a3b8">&lt;!doctype html&gt;</text>
+
+      <text x="78" y="328" fill="#475569" text-anchor="end">2</text>
+      <text x="100" y="328" fill="#94a3b8">&lt;html lang="en"&gt;</text>
+
+      <text x="78" y="352" fill="#475569" text-anchor="end">3</text>
+      <text x="118" y="352" fill="#94a3b8">&lt;head&gt;</text>
+
+      <text x="78" y="376" fill="#475569" text-anchor="end">4</text>
+      <text x="136" y="376" fill="#94a3b8">&lt;title&gt;Home&lt;/title&gt;</text>
+
+      <text x="78" y="400" fill="#475569" text-anchor="end">5</text>
+      <text x="136" y="400" fill="#fca5a5">&lt;title&gt;Home – Copy&lt;/title&gt;</text>
+
+      <text x="78" y="424" fill="#475569" text-anchor="end">6</text>
+      <text x="136" y="424" fill="#fca5a5">&lt;meta name="description"&gt;</text>
+
+      <text x="78" y="448" fill="#475569" text-anchor="end">7</text>
+      <text x="136" y="448" fill="#94a3b8">&lt;link rel="canonical" href="/"&gt;</text>
+
+      <text x="78" y="472" fill="#475569" text-anchor="end">8</text>
+      <text x="136" y="472" fill="#fca5a5">&lt;img src="/hero.jpg"&gt;</text>
+
+      <text x="78" y="496" fill="#475569" text-anchor="end">9</text>
+      <text x="118" y="496" fill="#94a3b8">&lt;/head&gt;</text>
+    </g>
+  </g>
+
+  <!-- Scan beam between the two cards -->
+  <text x="600" y="214" font-size="13" fill="#ff8a3d" text-anchor="middle" letter-spacing="1" font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace">astro:build:done</text>
+  <rect x="532" y="240" width="6" height="310" fill="url(#beam)"/>
+  <path d="M 522 395 L 548 395 L 535 412 Z" fill="#ff5d01"/>
+
+  <!-- Right card: build report -->
+  <g>
+    <rect x="580" y="230" width="550" height="330" rx="14" fill="#0f1524" stroke="#1f2937" stroke-width="1.5"/>
+    <rect x="580" y="230" width="550" height="34" rx="14" fill="#161d2e"/>
+    <rect x="580" y="252" width="550" height="12" fill="#161d2e"/>
+    <circle cx="602" cy="247" r="6" fill="#ef4444"/>
+    <circle cx="622" cy="247" r="6" fill="#f59e0b"/>
+    <circle cx="642" cy="247" r="6" fill="#22c55e"/>
+    <text x="1140" y="251" font-size="12" fill="#64748b" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace">build report</text>
+
+    <text x="610" y="302" font-size="14" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace">$ astro build</text>
+
+    <text x="608" y="346" font-size="27" font-weight="800" fill="#f87171">✖  SEO check failed</text>
+    <line x1="610" y1="366" x2="1100" y2="366" stroke="#1f2937" stroke-width="1"/>
+
+    <circle cx="619" cy="402" r="4" fill="#f87171"/>
+    <text x="634" y="407" font-size="16" fill="#cbd5e1">duplicate &lt;title&gt; tag</text>
+
+    <circle cx="619" cy="432" r="4" fill="#f87171"/>
+    <text x="634" y="437" font-size="16" fill="#cbd5e1">&lt;meta name="description"&gt; is empty</text>
+
+    <circle cx="619" cy="462" r="4" fill="#f87171"/>
+    <text x="634" y="467" font-size="16" fill="#cbd5e1">&lt;img&gt; missing alt attribute</text>
+
+    <rect x="610" y="496" width="152" height="36" rx="8" fill="#f87171" fill-opacity="0.08" stroke="#f87171" stroke-width="1"/>
+    <text x="686" y="519" font-size="14" fill="#f87171" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace">exit code 1</text>
+  </g>
+
+  <!-- Footer capability chips -->
+  <g font-size="14" fill="#94a3b8">
+    <rect x="195" y="590" width="160" height="32" rx="16" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+    <circle cx="216" cy="606" r="3" fill="#ff8a3d"/>
+    <text x="230" y="611">Zero-config</text>
+
+    <rect x="385" y="590" width="290" height="32" rx="16" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+    <circle cx="406" cy="606" r="3" fill="#ff8a3d"/>
+    <text x="420" y="611">Single-pass HTML parser</text>
+
+    <rect x="705" y="590" width="300" height="32" rx="16" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+    <circle cx="726" cy="606" r="3" fill="#ff8a3d"/>
+    <text x="740" y="611">Non-zero exit on failure</text>
+  </g>
+</svg>

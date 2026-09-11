@@ -1,5 +1,7 @@
 # astro-seo-enforcer
 
+![astro-seo-enforcer](.github/assets/hero.svg)
+
 [![Release](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/release.yml/badge.svg)](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/release.yml)
 
 [![CI](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/ci.yml/badge.svg)](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/ci.yml)
