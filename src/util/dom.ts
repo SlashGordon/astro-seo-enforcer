@@ -34,9 +34,14 @@ export function tag(element: HTMLElement): string {
   return (element.tagName ?? '').toLowerCase();
 }
 
+/** Collapse runs of whitespace to a single space and trim the ends. */
+export function normalizeWhitespace(input: string): string {
+  return input.replace(/\s+/g, ' ').trim();
+}
+
 /** Collapse whitespace and trim; optionally cut the string to `max` characters. */
 export function truncate(input: string, max: number): string {
-  const clean = input.replace(/\s+/g, ' ').trim();
+  const clean = normalizeWhitespace(input);
   return clean.length > max ? `${clean.slice(0, Math.max(0, max - 1))}…` : clean;
 }
 
@@ -49,6 +54,23 @@ export function describeEl(element: HTMLElement, maxAttrs = 4): string {
     .map(([key, value]) => (value === '' ? key : `${key}="${truncate(String(value), 50)}"`));
   const overflow = entries.length > maxAttrs ? ' …' : '';
   return `<${name}${shown.length > 0 ? ` ${shown.join(' ')}` : ''}${overflow}>`;
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+/**
+ * Escape text for safe interpolation into an HTML document. Every violation
+ * message can contain text lifted straight from the page being reported on
+ * (a `<title>`, an `<h1>`, …), so the HTML report must not trust it verbatim.
+ */
+export function escapeHtml(input: string): string {
+  return input.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] as string);
 }
 
 const NAMED_ENTITIES: Record<string, string> = {
@@ -112,7 +134,7 @@ export function collectVisibleText(element: HTMLElement): string {
   };
 
   visit(element);
-  return decodeEntities(buffer).replace(/\s+/g, ' ').trim();
+  return normalizeWhitespace(decodeEntities(buffer));
 }
 
 /**

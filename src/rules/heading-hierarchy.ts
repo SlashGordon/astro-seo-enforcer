@@ -1,7 +1,14 @@
+import type { HTMLElement } from 'node-html-parser';
 import type { Rule, Violation } from '../types.js';
-import { tag, walkElements } from '../util/dom.js';
+import { normalizeWhitespace, tag, walkElements } from '../util/dom.js';
 
 const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+
+/** The page's `<h1>` text, or `undefined` when the page has zero or more than one. */
+export function extractSingleH1(root: HTMLElement): string | undefined {
+  const h1s = root.querySelectorAll('h1');
+  return h1s.length === 1 ? normalizeWhitespace(h1s[0]?.text ?? '') : undefined;
+}
 
 /**
  * Enforces a sane heading outline:
@@ -22,7 +29,7 @@ export const headingHierarchyRule: Rule = (ctx) => {
     if (HEADING_TAGS.has(name)) {
       headings.push({
         level: Number(name.slice(1)),
-        text: (element.text ?? '').replace(/\s+/g, ' ').trim(),
+        text: normalizeWhitespace(element.text ?? ''),
       });
     }
   }

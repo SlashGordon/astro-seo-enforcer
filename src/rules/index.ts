@@ -52,6 +52,8 @@ export {
 // Cross-page checks: run by the runner after every file is parsed, not per page.
 export { findDuplicateContent } from './duplicate-content.js';
 export type { DuplicateContentPage } from './duplicate-content.js';
+export { findDuplicateValues } from './duplicate-values.js';
+export type { DuplicateValuesPage, DuplicateValuesSpec } from './duplicate-values.js';
 export { findOrphanPages } from './orphan-pages.js';
 export type { OrphanPagesInput } from './orphan-pages.js';
 export { findSitemapCoverage, extractLocs } from './sitemap-coverage.js';

@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -37,6 +37,7 @@ describe('runSeoChecks', () => {
     expect(result.scannedFiles).toBe(1);
     expect(result.violations).toEqual([]);
     expect(result.errorCount).toBe(0);
+    expect(result.score).toEqual({ value: 100, grade: 'A', rawDeduction: 0, byRule: [] });
   });
 
   it('collects violations from a broken page', async () => {
@@ -336,6 +337,57 @@ describe('seoEnforcer integration', () => {
     ).rejects.toThrow(/error\(s\)/);
     expect(process.exitCode).toBe(1);
     process.exitCode = 0; // reset so a failing hook does not fail the vitest process
+  });
+
+  it('writes JSON and HTML reports when configured, relative to the project root', async () => {
+    await write('bad.html', '<html><head></head><body></body></html>');
+    const integration = seoEnforcer({ report: { json: true, html: true }, failOn: 'never' });
+    const configDone = integration.hooks['astro:config:done']!;
+    const buildDone = integration.hooks['astro:build:done']!;
+
+    await configDone({ config: { root: new URL(`file://${dir}/`) } } as never, {} as never);
+    await buildDone(
+      {
+        dir: new URL(`file://${dir}/`),
+        routes: [],
+        pages: [],
+        assets: new Map(),
+        logger: silentLogger(),
+      } as never,
+      {} as never,
+    );
+
+    const jsonText = await readFile(path.join(dir, 'seo-report.json'), 'utf8');
+    const report = JSON.parse(jsonText);
+    expect(report.summary.errorCount).toBeGreaterThan(0);
+    expect(report.score.value).toBeLessThan(100);
+    expect(Array.isArray(report.violations)).toBe(true);
+
+    const htmlText = await readFile(path.join(dir, 'seo-report.html'), 'utf8');
+    expect(htmlText).toContain('<!doctype html>');
+    expect(htmlText).toContain(String(report.score.value));
+  });
+
+  it('does not write reports that are not configured', async () => {
+    await write('index.html', CLEAN_PAGE);
+    const integration = seoEnforcer();
+    const configDone = integration.hooks['astro:config:done']!;
+    const buildDone = integration.hooks['astro:build:done']!;
+
+    await configDone({ config: { root: new URL(`file://${dir}/`) } } as never, {} as never);
+    await buildDone(
+      {
+        dir: new URL(`file://${dir}/`),
+        routes: [],
+        pages: [],
+        assets: new Map(),
+        logger: silentLogger(),
+      } as never,
+      {} as never,
+    );
+
+    await expect(readFile(path.join(dir, 'seo-report.json'), 'utf8')).rejects.toThrow();
+    await expect(readFile(path.join(dir, 'seo-report.html'), 'utf8')).rejects.toThrow();
   });
 
   it('does not throw when failOn is "never"', async () => {

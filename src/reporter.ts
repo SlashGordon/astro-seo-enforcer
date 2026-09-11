@@ -1,5 +1,7 @@
+import type { SeoScore } from './score.js';
 import type { Violation } from './types.js';
 import { bold, dim, green, red, yellow } from './util/color.js';
+import { countErrors, groupByFile } from './util/violations.js';
 
 export interface ReportSummary {
   scannedFiles: number;
@@ -9,22 +11,34 @@ export interface ReportSummary {
 
 const DIVIDER = dim('─'.repeat(64));
 
-/** Build a human readable, grouped report from a flat list of violations. */
-export function formatReport(violations: Violation[], summary: ReportSummary): string {
-  const byFile = new Map<string, Violation[]>();
-  for (const violation of violations) {
-    const list = byFile.get(violation.file);
-    if (list) list.push(violation);
-    else byFile.set(violation.file, [violation]);
-  }
+const GRADE_COLOR: Record<SeoScore['grade'], (text: string) => string> = {
+  A: green,
+  B: green,
+  C: yellow,
+  D: red,
+  F: red,
+};
 
+/**
+ * Build a human readable, grouped report from a flat list of violations.
+ * `score` is optional so existing callers keep working unchanged.
+ */
+export function formatReport(
+  violations: Violation[],
+  summary: ReportSummary,
+  score?: SeoScore,
+): string {
   const lines: string[] = [];
   lines.push(bold('astro-seo-enforcer — SEO violation report'));
+  if (score) {
+    const color = GRADE_COLOR[score.grade];
+    lines.push(`${bold('SEO health score:')} ${color(`${score.value}/100 (${score.grade})`)}`);
+  }
   lines.push(DIVIDER);
 
-  const files = [...byFile.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const files = groupByFile(violations);
   for (const [file, fileViolations] of files) {
-    const errors = fileViolations.filter((v) => v.severity === 'error').length;
+    const errors = countErrors(fileViolations);
     const warnings = fileViolations.length - errors;
 
     lines.push('');
