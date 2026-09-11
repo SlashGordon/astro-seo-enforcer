@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.5.0...v1.6.0) (2026-09-11)
+
+
+### Features
+
+* add SEO health score and JSON/HTML report output ([85d18c1](https://github.com/SlashGordon/astro-seo-enforcer/commit/85d18c1b4969696fdc62b2ba4f35bff0a79a4c49))
+* add SEO health score and JSON/HTML report output ([22ccfa3](https://github.com/SlashGordon/astro-seo-enforcer/commit/22ccfa3af8834204966305ab55c6fac70933219c))
+
 ## [1.5.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.4.1...v1.5.0) (2026-09-09)
 
 ### Features
