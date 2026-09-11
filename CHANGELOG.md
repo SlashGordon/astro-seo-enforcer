@@ -7,11 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.5.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.4.1...v1.5.0) (2026-09-09)
 
-
 ### Features
 
-* add programmatic-SEO checks ([25a7b26](https://github.com/SlashGordon/astro-seo-enforcer/commit/25a7b2634c1541730d6d2c001c85fafa74f6dffe))
-* add programmatic-SEO checks (v1.4.0) ([9e630d9](https://github.com/SlashGordon/astro-seo-enforcer/commit/9e630d9adb68efa96017dfa7f1f4526011078ecf))
+- add programmatic-SEO checks ([25a7b26](https://github.com/SlashGordon/astro-seo-enforcer/commit/25a7b2634c1541730d6d2c001c85fafa74f6dffe))
+- add programmatic-SEO checks (v1.4.0) ([9e630d9](https://github.com/SlashGordon/astro-seo-enforcer/commit/9e630d9adb68efa96017dfa7f1f4526011078ecf))
 
 ## [1.4.1](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.4.0...v1.4.1) (2026-09-08)
 

@@ -55,6 +55,8 @@ describe('resolveConfig', () => {
       severity: 'warning',
       requireInSitemap: true,
     });
+    expect(config.score).toEqual({ errorWeight: 6, warningWeight: 1.5 });
+    expect(config.report).toEqual({ json: false, html: false });
   });
 
   it('disables the programmatic-SEO rules when set to false', () => {
@@ -102,6 +104,33 @@ describe('resolveConfig', () => {
     expect(resolveConfig({ rules: { title: true } }).rules.title).toEqual(
       resolveConfig().rules.title,
     );
+  });
+});
+
+describe('resolveConfig — report', () => {
+  it('is disabled by default', () => {
+    const config = resolveConfig();
+    expect(config.report.json).toBe(false);
+    expect(config.report.html).toBe(false);
+  });
+
+  it('uses the default filename when set to `true`', () => {
+    const config = resolveConfig({ report: { json: true, html: true } });
+    expect(config.report.json).toBe('seo-report.json');
+    expect(config.report.html).toBe('seo-report.html');
+  });
+
+  it('uses a custom path when given a string', () => {
+    const config = resolveConfig({ report: { json: 'out/report.json' } });
+    expect(config.report.json).toBe('out/report.json');
+    expect(config.report.html).toBe(false);
+  });
+});
+
+describe('resolveConfig — score', () => {
+  it('merges partial weights over the defaults', () => {
+    const config = resolveConfig({ score: { errorWeight: 10 } });
+    expect(config.score).toEqual({ errorWeight: 10, warningWeight: 1.5 });
   });
 });
 

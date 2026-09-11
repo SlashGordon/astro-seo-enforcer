@@ -16,6 +16,8 @@ readable report and exits with a non-zero code so your CI/CD pipeline fails.
 - Uses a lightweight HTML parser with a single pass per file.
 - Built for CI: a grouped, colourised report and a non-zero exit code on failure.
 
+It started as the build gate for [patioplanner.app](https://www.patioplanner.app/) and grew into a standalone integration from there. It now also runs in production on [slashgordon.link](https://www.slashgordon.link/), [druckzug.pro](https://www.druckzug.pro/), [howtolosemoneyfast.com](https://www.howtolosemoneyfast.com/) and [html-to-markdown-ai.com](https://www.html-to-markdown-ai.com/).
+
 ---
 
 ## Installation
@@ -143,6 +145,10 @@ seoEnforcer({
     orphanPages: { severity: 'warning', entryPoints: ['index.html'] },
     sitemapCoverage: { severity: 'warning', requireInSitemap: true },
   },
+  // Weights behind the SEO health score (see "Score & reports" below).
+  score: { errorWeight: 6, warningWeight: 1.5 },
+  // Write a JSON / HTML report to disk, e.g. for a CI/CD artifact.
+  report: { json: true, html: 'reports/seo.html' },
 });
 ```
 
@@ -162,12 +168,14 @@ export default defineConfig({
 
 ### Top-level options
 
-| Option    | Type                              | Default        | Description                                                            |
-| --------- | --------------------------------- | -------------- | ---------------------------------------------------------------------- |
-| `enabled` | `boolean`                         | `true`         | Master switch. `false` disables the integration completely.            |
-| `exclude` | `Array<string \| RegExp>`         | `['404.html']` | Paths to skip. Supports plain prefixes, `*` / `**` globs and `RegExp`. |
-| `failOn`  | `'error' \| 'warning' \| 'never'` | `'error'`      | Which severity breaks the build. `'never'` only prints the report.     |
-| `rules`   | `object`                          | see below      | Per-rule configuration. Set any rule to `false` to disable it.         |
+| Option    | Type                              | Default        | Description                                                                  |
+| --------- | --------------------------------- | -------------- | ---------------------------------------------------------------------------- |
+| `enabled` | `boolean`                         | `true`         | Master switch. `false` disables the integration completely.                  |
+| `exclude` | `Array<string \| RegExp>`         | `['404.html']` | Paths to skip. Supports plain prefixes, `*` / `**` globs and `RegExp`.       |
+| `failOn`  | `'error' \| 'warning' \| 'never'` | `'error'`      | Which severity breaks the build. `'never'` only prints the report.           |
+| `rules`   | `object`                          | see below      | Per-rule configuration. Set any rule to `false` to disable it.               |
+| `score`   | `object`                          | see below      | Weights behind the SEO health score. See [Score & reports](#score--reports). |
+| `report`  | `object`                          | see below      | Write a JSON / HTML report to disk. See [Score & reports](#score--reports).  |
 
 `exclude` patterns are matched against the **POSIX path relative to the build
 output directory** (e.g. `blog/hello/index.html`).
@@ -329,6 +337,62 @@ interface SitemapCoverageRuleOptions {
 
 ---
 
+## Score & reports
+
+Every run computes an **SEO health score** from `0` to `100` (with a letter
+grade, `A`–`F`) alongside the violation list. It is not a simple violation
+count: it looks at errors and warnings **per scanned page**, so a handful of
+findings on an otherwise large, clean site barely moves the score, while the
+same findings on a five-page site cost much more. The terminal report prints
+it next to the title; it is also included in the JSON and HTML reports below.
+
+| Grade | Score range |
+| ----- | ----------- |
+| A     | 90–100      |
+| B     | 80–89       |
+| C     | 70–79       |
+| D     | 60–69       |
+| F     | below 60    |
+
+```js
+seoEnforcer({
+  score: {
+    errorWeight: 6, // points deducted per error, averaged across pages
+    warningWeight: 1.5, // points deducted per warning, averaged across pages
+  },
+});
+```
+
+Set `report.json` and/or `report.html` to write the same data to disk —
+useful as a CI/CD artifact, a status badge source, or just a shareable page:
+
+```js
+seoEnforcer({
+  report: {
+    json: true, // -> seo-report.json (project root)
+    html: 'reports/seo.html', // custom path, relative to the project root
+  },
+});
+```
+
+| Option        | Type                | Default | Description                                                                      |
+| ------------- | ------------------- | ------- | -------------------------------------------------------------------------------- |
+| `report.json` | `boolean \| string` | `false` | `true` writes `seo-report.json`; a string is a custom path; `false` disables it. |
+| `report.html` | `boolean \| string` | `false` | Same as `json`, but a self-contained static HTML page (no external assets).      |
+
+The JSON report contains a timestamp, the summary counts, the full score
+(including a per-rule breakdown) and every violation — everything you need to
+gate a pipeline or feed a dashboard without re-parsing the terminal output.
+The HTML report is a single portable file: open it locally, or upload it as a
+build artifact your CI provider can link to from the job summary.
+
+> **Note:** report paths are resolved relative to the Astro project root
+> (where `astro.config.mjs` lives), not the build output directory — so the
+> report survives independently of whatever you deploy from `dist/`. Pass an
+> absolute path to write it anywhere else.
+
+---
+
 ## Recipes
 
 ### Only warn locally, fail in CI
@@ -383,8 +447,11 @@ seoEnforcer({
    links and `noindex` state are recorded for the cross-page checks (duplicate
    `title` / `metaDescription` / `<h1>`, `duplicateContent`, `orphanPages` and
    `sitemapCoverage`), which run once every file has been parsed.
-6. A grouped report is printed to `stderr`.
-7. If the configured `failOn` threshold is reached, the integration sets
+6. An SEO health score is computed from the violations, then a grouped report
+   is printed to `stderr`.
+7. If `report.json` / `report.html` are set, the same data is written to disk,
+   relative to the project root.
+8. If the configured `failOn` threshold is reached, the integration sets
    `process.exitCode = 1` and throws, so `astro build` fails.
 
 ---
@@ -395,12 +462,24 @@ The internals are exported if you want to run the checks yourself (tests, custom
 tooling, a standalone script):
 
 ```ts
-import { runSeoChecks, resolveConfig, formatReport } from 'astro-seo-enforcer';
+import {
+  runSeoChecks,
+  resolveConfig,
+  formatReport,
+  formatJsonReport,
+  formatHtmlReport,
+} from 'astro-seo-enforcer';
+import { writeFile } from 'node:fs/promises';
 
 const config = resolveConfig({ rules: { robots: false } });
 const result = await runSeoChecks({ distPath: './dist', config });
 
-console.log(formatReport(result.violations, result));
+console.log(formatReport(result.violations, result, result.score));
+console.log(`SEO health score: ${result.score.value}/100 (${result.score.grade})`);
+
+await writeFile('seo-report.json', formatJsonReport(result.violations, result, result.score));
+await writeFile('seo-report.html', formatHtmlReport(result.violations, result, result.score));
+
 if (result.errorCount > 0) process.exit(1);
 ```
 
@@ -438,7 +517,7 @@ acts as an integration test. Break one of its pages and the build fails.
 
 ## License
 
-MIT © SlashGordon
+MIT © [SlashGordon](https://www.slashgordon.link).
 
 ## Support
 

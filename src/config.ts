@@ -163,6 +163,25 @@ export interface DuplicateContentRuleOptions {
   maxPages: number;
 }
 
+export interface ScoreOptions {
+  /** Points deducted for errors occurring, on average, once per scanned page. */
+  errorWeight: number;
+  /** Points deducted for warnings occurring, on average, once per scanned page. */
+  warningWeight: number;
+}
+
+export interface ReportOutputConfig {
+  /**
+   * Write a machine-readable JSON report (summary, score and every violation) —
+   * meant to be picked up as a CI/CD artifact. `true` writes it to the default
+   * path; a string is a custom path (relative to the project root unless
+   * absolute); `false` (the default) disables it.
+   */
+  json: boolean | string;
+  /** Same as `json`, but a self-contained static HTML report. */
+  html: boolean | string;
+}
+
 export interface ImageSizeRuleOptions {
   /** Severity emitted for every finding this rule produces. */
   severity: Severity;
@@ -225,6 +244,10 @@ export interface SeoEnforcerUserConfig {
   failOn?: 'error' | 'warning' | 'never';
   /** Per-rule configuration. Set a rule to `false` to disable it. */
   rules?: Partial<RulesConfig>;
+  /** Weights behind the SEO health score. */
+  score?: Partial<ScoreOptions>;
+  /** Write the report to a file, for use as a CI/CD artifact. Both are off by default. */
+  report?: Partial<ReportOutputConfig>;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -235,6 +258,8 @@ export interface ResolvedConfig {
   enabled: boolean;
   exclude: Array<string | RegExp>;
   failOn: 'error' | 'warning' | 'never';
+  score: ScoreOptions;
+  report: { json: string | false; html: string | false };
   rules: {
     title: false | TitleRuleOptions;
     metaDescription: false | MetaDescriptionRuleOptions;
@@ -351,6 +376,16 @@ export const DEFAULT_DUPLICATE_CONTENT: DuplicateContentRuleOptions = {
   maxPages: 1500,
 };
 
+export const DEFAULT_SCORE: ScoreOptions = {
+  errorWeight: 6,
+  warningWeight: 1.5,
+};
+
+/** Default path (relative to the project root) for `report.json: true`. */
+export const DEFAULT_REPORT_JSON_PATH = 'seo-report.json';
+/** Default path (relative to the project root) for `report.html: true`. */
+export const DEFAULT_REPORT_HTML_PATH = 'seo-report.html';
+
 export const DEFAULT_IMAGE_SIZE: ImageSizeRuleOptions = {
   severity: 'warning',
   // ~200 KB. Above this a single image starts to noticeably hurt LCP / load time.
@@ -379,15 +414,36 @@ function resolveRule<T extends object>(
   return { ...defaults, ...value };
 }
 
+/**
+ * Resolve one `report.json` / `report.html` value to a file path, or `false`
+ * when the report is disabled:
+ * - `false` / `undefined` -> disabled
+ * - `true`                -> `defaultPath`
+ * - string                -> that path, used as-is
+ */
+function resolveReportPath(
+  value: boolean | string | undefined,
+  defaultPath: string,
+): string | false {
+  if (value === undefined || value === false) return false;
+  return value === true ? defaultPath : value;
+}
+
 /** Merge a user configuration with the built-in defaults. */
 export function resolveConfig(userConfig: SeoEnforcerUserConfig = {}): ResolvedConfig {
   const rules = userConfig.rules ?? {};
+  const report = userConfig.report ?? {};
 
   return {
     enabled: userConfig.enabled ?? true,
     // The 404 page rarely has a canonical URL or a "real" description, so skip it by default.
     exclude: userConfig.exclude ?? ['404.html'],
     failOn: userConfig.failOn ?? 'error',
+    score: { ...DEFAULT_SCORE, ...userConfig.score },
+    report: {
+      json: resolveReportPath(report.json, DEFAULT_REPORT_JSON_PATH),
+      html: resolveReportPath(report.html, DEFAULT_REPORT_HTML_PATH),
+    },
     rules: {
       title: resolveRule(rules.title, DEFAULT_TITLE),
       metaDescription: resolveRule(rules.metaDescription, DEFAULT_META_DESCRIPTION),

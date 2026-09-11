@@ -37,4 +37,20 @@ describe('formatReport', () => {
     expect(report).toContain('2 error(s)');
     expect(report).toContain('1 warning(s)');
   });
+
+  it('omits the score line when no score is given', () => {
+    expect(report).not.toContain('SEO health score');
+  });
+});
+
+describe('formatReport with a score', () => {
+  it('includes the score value and grade', () => {
+    const withScore = formatReport(
+      violations,
+      { scannedFiles: 5, errorCount: 2, warningCount: 1 },
+      { value: 74, grade: 'C', rawDeduction: 26, byRule: [] },
+    );
+    expect(withScore).toContain('SEO health score');
+    expect(withScore).toContain('74/100 (C)');
+  });
 });

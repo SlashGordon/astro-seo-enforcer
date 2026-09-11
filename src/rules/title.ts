@@ -1,4 +1,11 @@
+import type { HTMLElement } from 'node-html-parser';
 import type { Rule, Violation } from '../types.js';
+import { normalizeWhitespace } from '../util/dom.js';
+
+/** The page's `<title>` text, whitespace-normalised (empty when absent). */
+export function extractTitle(root: HTMLElement): string {
+  return normalizeWhitespace(root.querySelector('title')?.text ?? '');
+}
 
 /**
  * Requires a non-empty `<title>` whose length falls inside the configured range.
@@ -10,10 +17,9 @@ export const titleRule: Rule = (ctx) => {
   const options = ctx.config.rules.title;
   if (!options) return [];
 
-  const element = ctx.root.querySelector('title');
-  const title = (element?.text ?? '').replace(/\s+/g, ' ').trim();
+  const title = extractTitle(ctx.root);
 
-  if (!element || title.length === 0) {
+  if (title.length === 0) {
     return [
       {
         file: ctx.file,

@@ -8,12 +8,20 @@ import { DEFAULT_SITEMAP_COVERAGE } from './config.js';
 import type { PageContext, Violation } from './types.js';
 import { allRules } from './rules/index.js';
 import { findDuplicateContent } from './rules/duplicate-content.js';
+import { findDuplicateValues } from './rules/duplicate-values.js';
+import type { DuplicateValuesPage } from './rules/duplicate-values.js';
+import { extractSingleH1 } from './rules/heading-hierarchy.js';
+import { extractMetaDescription } from './rules/meta-description.js';
 import { findOrphanPages } from './rules/orphan-pages.js';
 import { extractLocs, findSitemapCoverage } from './rules/sitemap-coverage.js';
 import type { SitemapDoc } from './rules/sitemap-coverage.js';
+import { extractTitle } from './rules/title.js';
+import { computeScore } from './score.js';
+import type { SeoScore } from './score.js';
 import { extractMainText, extractVisibleText } from './util/dom.js';
 import { collectLinkTargets } from './util/links.js';
 import { isExcluded } from './util/exclude.js';
+import { countErrors } from './util/violations.js';
 
 export interface RunOptions {
   /** Absolute path of the directory that holds the generated `.html` files. */
@@ -26,6 +34,7 @@ export interface RunResult {
   scannedFiles: number;
   errorCount: number;
   warningCount: number;
+  score: SeoScore;
 }
 
 const SITEMAP_FILE = /(^|\/)sitemap[^/]*\.xml$/i;
@@ -41,9 +50,10 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
   const violations: Violation[] = [];
 
   const { rules } = config;
-  const titleRegistry = new Map<string, string[]>();
-  const metaDescriptionRegistry = new Map<string, string[]>();
-  const h1Registry = new Map<string, string[]>();
+  // Extracted value per page, kept only when its rule's `checkDuplicates` option is on.
+  const titlePages: DuplicateValuesPage[] = [];
+  const metaDescriptionPages: DuplicateValuesPage[] = [];
+  const h1Pages: DuplicateValuesPage[] = [];
   // Visible text per page, kept only when the duplicateContent rule is enabled.
   const contentPages: Array<{ file: string; text: string }> = [];
   const scannedPages: string[] = [];
@@ -119,21 +129,15 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
       contentPages.push({ file, text: scoped ? (ctx.mainText as string) : ctx.bodyText });
     }
 
-    // Collect titles so cross-page duplicates can be reported once all files are in.
-    const titleOptions = rules.title;
-    if (titleOptions && titleOptions.checkDuplicates) {
-      register(titleRegistry, normalizeText(root.querySelector('title')?.text), file);
+    // Collect values so cross-page duplicates can be reported once all files are in.
+    if (rules.title && rules.title.checkDuplicates) {
+      titlePages.push({ file, value: extractTitle(root) });
     }
-
-    const metaOptions = rules.metaDescription;
-    if (metaOptions && metaOptions.checkDuplicates) {
-      register(metaDescriptionRegistry, normalizeText(metaDescriptionOf(root)), file);
+    if (rules.metaDescription && rules.metaDescription.checkDuplicates) {
+      metaDescriptionPages.push({ file, value: extractMetaDescription(root) });
     }
-
-    const headingOptions = rules.headingHierarchy;
-    if (headingOptions && headingOptions.checkDuplicateH1) {
-      const h1s = root.querySelectorAll('h1');
-      if (h1s.length === 1) register(h1Registry, normalizeText(h1s[0]?.text), file);
+    if (rules.headingHierarchy && rules.headingHierarchy.checkDuplicateH1) {
+      h1Pages.push({ file, value: extractSingleH1(root) });
     }
 
     if ((wantSitemap || wantOrphan) && hasNoindex(root)) noindexPages.add(file);
@@ -142,24 +146,26 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
     }
   }
 
-  emitDuplicates(violations, titleRegistry, {
-    rule: 'title',
-    severity: 'error',
-    label: 'Duplicate <title>',
-    hint: 'Give every page a unique <title>.',
-  });
-  emitDuplicates(violations, metaDescriptionRegistry, {
-    rule: 'metaDescription',
-    severity: 'warning',
-    label: 'Duplicate <meta name="description">',
-    hint: 'Write a description that reflects each page individually.',
-  });
-  emitDuplicates(violations, h1Registry, {
-    rule: 'headingHierarchy',
-    severity: 'warning',
-    label: 'Duplicate <h1> text',
-    hint: 'Vary the <h1> so pages do not compete for the same query.',
-  });
+  violations.push(
+    ...findDuplicateValues(titlePages, {
+      rule: 'title',
+      severity: 'error',
+      label: 'Duplicate <title>',
+      hint: 'Give every page a unique <title>.',
+    }),
+    ...findDuplicateValues(metaDescriptionPages, {
+      rule: 'metaDescription',
+      severity: 'warning',
+      label: 'Duplicate <meta name="description">',
+      hint: 'Write a description that reflects each page individually.',
+    }),
+    ...findDuplicateValues(h1Pages, {
+      rule: 'headingHierarchy',
+      severity: 'warning',
+      label: 'Duplicate <h1> text',
+      hint: 'Vary the <h1> so pages do not compete for the same query.',
+    }),
+  );
 
   const duplicateContentOptions = rules.duplicateContent;
   if (duplicateContentOptions) {
@@ -190,33 +196,15 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
       a.rule.localeCompare(b.rule),
   );
 
-  const errorCount = violations.filter((violation) => violation.severity === 'error').length;
+  const errorCount = countErrors(violations);
   const warningCount = violations.length - errorCount;
+  const score = computeScore(violations, scannedPages.length, config.score);
 
-  return { violations, scannedFiles: scannedPages.length, errorCount, warningCount };
+  return { violations, scannedFiles: scannedPages.length, errorCount, warningCount, score };
 }
 
 function severityRank(severity: Violation['severity']): number {
   return severity === 'error' ? 0 : 1;
-}
-
-function normalizeText(text: string | undefined): string {
-  return (text ?? '').replace(/\s+/g, ' ').trim();
-}
-
-/** Add `file` to `registry` under `key`, unless the key is empty. */
-function register(registry: Map<string, string[]>, key: string, file: string): void {
-  if (key.length === 0) return;
-  const bucket = registry.get(key) ?? [];
-  bucket.push(file);
-  registry.set(key, bucket);
-}
-
-function metaDescriptionOf(root: HTMLElement): string | undefined {
-  const meta = root
-    .querySelectorAll('meta')
-    .find((element) => (element.getAttribute('name') ?? '').toLowerCase() === 'description');
-  return meta?.getAttribute('content') ?? undefined;
 }
 
 function hasNoindex(root: HTMLElement): boolean {
@@ -233,33 +221,6 @@ function hasNoindex(root: HTMLElement): boolean {
     }
   }
   return false;
-}
-
-interface DuplicateSpec {
-  rule: string;
-  severity: Violation['severity'];
-  label: string;
-  hint: string;
-}
-
-function emitDuplicates(
-  violations: Violation[],
-  registry: Map<string, string[]>,
-  spec: DuplicateSpec,
-): void {
-  for (const [value, pages] of registry) {
-    if (pages.length < 2) continue;
-    for (const page of pages) {
-      const others = pages.filter((candidate) => candidate !== page);
-      violations.push({
-        file: page,
-        rule: spec.rule,
-        severity: spec.severity,
-        message: `${spec.label} "${value}" — also on: ${others.join(', ')}.`,
-        hint: spec.hint,
-      });
-    }
-  }
 }
 
 /** Read and parse every `sitemap*.xml` in the build output. */

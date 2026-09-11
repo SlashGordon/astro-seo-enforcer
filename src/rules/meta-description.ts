@@ -1,4 +1,14 @@
+import type { HTMLElement } from 'node-html-parser';
 import type { Rule } from '../types.js';
+import { normalizeWhitespace } from '../util/dom.js';
+
+/** The page's `<meta name="description">` content, whitespace-normalised (empty when absent). */
+export function extractMetaDescription(root: HTMLElement): string {
+  const meta = root
+    .querySelectorAll('meta')
+    .find((element) => (element.getAttribute('name') ?? '').toLowerCase() === 'description');
+  return normalizeWhitespace(meta?.getAttribute('content') ?? '');
+}
 
 /**
  * Requires a `<meta name="description">` whose length is within the range.
@@ -10,12 +20,9 @@ export const metaDescriptionRule: Rule = (ctx) => {
   const options = ctx.config.rules.metaDescription;
   if (!options) return [];
 
-  const meta = ctx.root
-    .querySelectorAll('meta')
-    .find((element) => (element.getAttribute('name') ?? '').toLowerCase() === 'description');
-  const content = (meta?.getAttribute('content') ?? '').replace(/\s+/g, ' ').trim();
+  const content = extractMetaDescription(ctx.root);
 
-  if (!meta || content.length === 0) {
+  if (content.length === 0) {
     return [
       {
         file: ctx.file,

@@ -1,4 +1,5 @@
 import type { Rule, Violation } from '../types.js';
+import { normalizeWhitespace } from '../util/dom.js';
 
 /**
  * Flags links whose text is not descriptive on its own ("click here", "read
@@ -14,7 +15,7 @@ export const anchorTextRule: Rule = (ctx) => {
 
   for (const anchor of ctx.root.querySelectorAll('a')) {
     const href = anchor.getAttribute('href') ?? '';
-    const text = (anchor.text ?? '').replace(/\s+/g, ' ').trim();
+    const text = normalizeWhitespace(anchor.text ?? '');
     // Drop surrounding quotes / trailing punctuation before comparing.
     const normalized = text.toLowerCase().replace(/^[\s"'“”(]+|[\s."'“”):;,!?]+$/g, '');
 
