@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.6.1...v1.7.0) (2026-09-24)
+
+
+### Features
+
+* added security checks ([9313ee8](https://github.com/SlashGordon/astro-seo-enforcer/commit/9313ee866c1543b80b9fafbbd289d798259172cf))
+
 ## [1.6.1](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.6.0...v1.6.1) (2026-09-11)
 
 
