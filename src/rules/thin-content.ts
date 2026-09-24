@@ -6,8 +6,8 @@ function wordCount(text: string): number {
 }
 
 /**
- * Flags pages whose main content is too thin to rank — the classic failure of
- * programmatic pages that swap a variable into a template and little else.
+ * Flags pages whose main content is too thin to rank. Programmatic pages that
+ * swap one variable into a template and little else fail this most often.
  *
  * When `scopeToMain` is set (default), the count is taken from the first
  * `<main>` / `<article>` / `role="main"` region so shared nav, header and

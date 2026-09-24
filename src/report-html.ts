@@ -12,7 +12,7 @@ const GRADE_COLOR: Record<SeoScore['grade'], string> = {
   F: '#dc2626',
 };
 
-/** Render a self-contained (no external assets) HTML report — safe to use as a CI/CD artifact. */
+/** Render a self-contained HTML report with no external assets, for use as a CI/CD artifact. */
 export function formatHtmlReport(
   violations: readonly Violation[],
   summary: ReportSummary,

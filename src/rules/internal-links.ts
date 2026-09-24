@@ -19,7 +19,7 @@ import {
  * with an extension must match a file exactly.
  *
  * External links (`http(s)://`, `//host/…`, `mailto:`, `tel:`, …), query-only
- * and `href="#"` links are ignored. Cross-page fragments are not resolved —
+ * and `href="#"` links are ignored. Cross-page fragments are not resolved;
  * only the target page's existence is checked.
  */
 export const internalLinksRule: Rule = (ctx) => {
@@ -28,7 +28,7 @@ export const internalLinksRule: Rule = (ctx) => {
 
   const violations: Violation[] = [];
 
-  // Anchor targets (`id` / `<a name>`) of the current document — built on demand.
+  // Anchor targets (`id` / `<a name>`) of the current document, built on first use.
   let currentAnchors: Set<string> | undefined;
   const anchorsHere = (): Set<string> => (currentAnchors ??= collectAnchorNames(ctx.root));
 

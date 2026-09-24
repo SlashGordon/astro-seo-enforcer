@@ -23,7 +23,7 @@ export interface SitemapCoverageInput {
 
 export interface SitemapCoverageResult {
   violations: Violation[];
-  /** Output files a sitemap resolves to — reused for orphan-page detection. */
+  /** Output files a sitemap resolves to; orphan-page detection reuses them. */
   sitemapFiles: Set<string>;
 }
 
@@ -62,7 +62,7 @@ export function findSitemapCoverage(
       try {
         pathname = new URL(loc).pathname;
       } catch {
-        // A relative <loc> — use it as-is.
+        // A relative <loc>: use it as-is.
       }
       const match = matchOutputFile(resolveInternalPath(pathname, 'index.html'), input.siteFiles);
       if (match === undefined) {

@@ -3,7 +3,7 @@ import type { Rule } from '../types.js';
 /**
  * Requires exactly one `<link rel="canonical">` with a usable `href`.
  * When `requireAbsolute` is set (default), the href must be an absolute
- * http(s) URL — relative canonicals are a common and costly mistake.
+ * http(s) URL, since a relative one resolves against whichever URL served the page.
  */
 export const canonicalRule: Rule = (ctx) => {
   const options = ctx.config.rules.canonical;

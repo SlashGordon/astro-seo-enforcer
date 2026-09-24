@@ -6,8 +6,8 @@
  * data, only the few header bytes that carry the dimensions, so it is fast and
  * safe to run synchronously inside a rule.
  *
- * Vector formats (SVG) have no fixed pixel size, so they intentionally return
- * `undefined` — the "is this image scaled down?" heuristic does not apply.
+ * Vector formats (SVG) have no fixed pixel size, so they return `undefined`
+ * and the "is this image scaled down?" check skips them.
  */
 
 export interface ImageDimensions {
@@ -140,7 +140,7 @@ function readWebp(buffer: Buffer): ImageDimensions | undefined {
     return width > 0 && height > 0 ? { width, height } : undefined;
   }
 
-  // Extended format (VP8X) — 24-bit little-endian canvas dimensions minus one.
+  // Extended format (VP8X): 24-bit little-endian canvas dimensions minus one.
   if (format === 'VP8X') {
     if (buffer.length < 30) return undefined;
     const width =

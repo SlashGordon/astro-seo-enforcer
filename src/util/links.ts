@@ -83,10 +83,21 @@ export function matchOutputFile(rel: string, siteFiles: ReadonlySet<string>): st
 }
 
 /**
+ * URL paths a static host serves an output file under: `blog/index.html` is
+ * `/blog/`, `about.html` is both `/about` and `/about.html`.
+ */
+export function urlPathsForFile(file: string): string[] {
+  if (file === 'index.html') return ['/'];
+  if (file.endsWith('/index.html')) return [`/${file.slice(0, -'index.html'.length)}`];
+  if (file.endsWith('.html')) return [`/${file.slice(0, -'.html'.length)}`, `/${file}`];
+  return [`/${file}`];
+}
+
+/**
  * Every output file reachable from this document via an internal `<a href>`,
  * resolved the way a static host serves files. Used to build the site-wide
- * link graph for orphan-page detection — fragments, external links and
- * unresolvable paths are simply left out.
+ * link graph for orphan-page detection. Fragments, external links and
+ * unresolvable paths are left out.
  */
 export function collectLinkTargets(
   root: HTMLElement,

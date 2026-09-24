@@ -77,8 +77,8 @@ export function findDuplicateContent(
   }
 
   // How many of the eligible pages each shingle appears on, for the unique-ratio
-  // pass — this catches many-way templating that no single pair trips the
-  // `threshold` on (e.g. 200 location pages that are each 85% boilerplate).
+  // pass. It catches many-way templating that no single pair trips `threshold`
+  // on (e.g. 200 location pages that are each 85% boilerplate).
   const pagesPerShingle = new Map<string, number>();
   if (options.minUniqueRatio > 0) {
     for (const page of eligible) {

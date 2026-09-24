@@ -27,6 +27,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "astro-seo-enforcer": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -47,6 +50,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "live": "npm run build && node dist/cli.js live",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
@@ -55,6 +59,7 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
+    "@clack/prompts": "^1.8.1",
     "node-html-parser": "^9.0.3"
   },
   "peerDependencies": {

@@ -19,8 +19,8 @@ export interface MetaDescriptionRuleOptions {
   /** Maximum length of the meta description, inclusive. */
   maxLength: number;
   /**
-   * Warn when the same meta description is used on more than one page —
-   * templated pages that forget to vary it are a common programmatic-SEO slip.
+   * Warn when the same meta description is used on more than one page, which
+   * happens when a templated page set forgets to vary it.
    */
   checkDuplicates: boolean;
 }
@@ -92,8 +92,20 @@ export interface AnchorTextRuleOptions {
 }
 
 export interface JsDependencyRuleOptions {
-  /** Minimum number of visible text characters expected inside `<body>`. */
+  /** Minimum number of visible text characters expected in the page's content. */
   minTextLength: number;
+  /**
+   * Measure the first `<main>` / `<article>` / `role="main"` region instead of
+   * the whole `<body>`, so nav, footer and legal links cannot pad an empty
+   * client-rendered shell past `minTextLength`. Pages with no such region fall
+   * back to `<body>`.
+   */
+  scopeToMain: boolean;
+  /**
+   * Flags a short `<h1>` matching this, e.g. "JavaScript required": the sign of
+   * a shell page that only renders its real content client-side. `false` disables.
+   */
+  noJsNotice: RegExp | false;
 }
 
 export interface CanonicalRuleOptions {
@@ -114,7 +126,7 @@ export interface InternalLinksRuleOptions {
   /**
    * Also verify that a same-page `#fragment` link points at an element with a
    * matching `id` (or `<a name>`) in the current document. Cross-page fragments
-   * are not resolved — only the target page's existence is checked.
+   * are not resolved; only the target page's existence is checked.
    */
   checkFragments: boolean;
   /**
@@ -163,6 +175,52 @@ export interface DuplicateContentRuleOptions {
   maxPages: number;
 }
 
+export interface RobotsTxtRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /** Require at least one `Sitemap:` line pointing at a sitemap in the build output. */
+  requireSitemap: boolean;
+}
+
+export interface LlmsTxtRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /** Verify that links to this site inside `llms.txt` resolve to files in the build output. */
+  checkLinks: boolean;
+}
+
+export interface SecurityHeadersRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /** Headers file in the build output, in Netlify / Cloudflare Pages `_headers` format. */
+  file: string;
+  /** Header names (case-insensitive) that must apply to the site root `/`. */
+  requiredHeaders: string[];
+  /** Require `X-Frame-Options` or a CSP `frame-ancestors` directive. */
+  requireFrameProtection: boolean;
+  /**
+   * Check every page's scripts, stylesheets, images, frames and inline code
+   * against the Content-Security-Policy that `_headers` applies to it.
+   */
+  checkCsp: boolean;
+}
+
+export interface LegalPageLink {
+  /** Name used in the report, e.g. `Impressum`. */
+  label: string;
+  /** Tested against each link's `href` and visible text. */
+  pattern: RegExp;
+}
+
+export interface LegalPagesRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /** Links every page must carry. */
+  links: LegalPageLink[];
+  /** Dist-relative paths / prefixes / globs / `RegExp`s to skip. */
+  ignore: Array<string | RegExp>;
+}
+
 export interface ScoreOptions {
   /** Points deducted for errors occurring, on average, once per scanned page. */
   errorWeight: number;
@@ -172,8 +230,8 @@ export interface ScoreOptions {
 
 export interface ReportOutputConfig {
   /**
-   * Write a machine-readable JSON report (summary, score and every violation) —
-   * meant to be picked up as a CI/CD artifact. `true` writes it to the default
+   * Write a machine-readable JSON report (summary, score and every violation),
+   * e.g. to pick up as a CI/CD artifact. `true` writes it to the default
    * path; a string is a custom path (relative to the project root unless
    * absolute); `false` (the default) disables it.
    */
@@ -225,6 +283,13 @@ export interface RulesConfig {
   structuredData: boolean | Partial<StructuredDataRuleOptions>;
   orphanPages: boolean | Partial<OrphanPagesRuleOptions>;
   sitemapCoverage: boolean | Partial<SitemapCoverageRuleOptions>;
+  robotsTxt: boolean | Partial<RobotsTxtRuleOptions>;
+  /** Off by default. */
+  llmsTxt: boolean | Partial<LlmsTxtRuleOptions>;
+  /** Off by default. */
+  securityHeaders: boolean | Partial<SecurityHeadersRuleOptions>;
+  /** Off by default. */
+  legalPages: boolean | Partial<LegalPagesRuleOptions>;
 }
 
 export interface SeoEnforcerUserConfig {
@@ -278,6 +343,10 @@ export interface ResolvedConfig {
     structuredData: false | StructuredDataRuleOptions;
     orphanPages: false | OrphanPagesRuleOptions;
     sitemapCoverage: false | SitemapCoverageRuleOptions;
+    robotsTxt: false | RobotsTxtRuleOptions;
+    llmsTxt: false | LlmsTxtRuleOptions;
+    securityHeaders: false | SecurityHeadersRuleOptions;
+    legalPages: false | LegalPagesRuleOptions;
   };
 }
 
@@ -349,6 +418,9 @@ export const DEFAULT_ANCHOR_TEXT: AnchorTextRuleOptions = {
 
 export const DEFAULT_JS_DEPENDENCY: JsDependencyRuleOptions = {
   minTextLength: 50,
+  scopeToMain: true,
+  noJsNotice:
+    /\b(javascript|js)\b.{0,12}\b(required|disabled|needed|erforderlich|benötigt|deaktiviert|requerido|necesario)\b|\b(enable|activate|aktivieren|activa|habilita)\b.{0,12}\bjavascript\b|\bjavascript\b.{0,12}\b(aktivieren|activar|habilitar)\b/i,
 };
 
 export const DEFAULT_CANONICAL: CanonicalRuleOptions = {
@@ -374,6 +446,33 @@ export const DEFAULT_DUPLICATE_CONTENT: DuplicateContentRuleOptions = {
   scopeToMain: true,
   minWords: 200,
   maxPages: 1500,
+};
+
+export const DEFAULT_ROBOTS_TXT: RobotsTxtRuleOptions = {
+  severity: 'warning',
+  requireSitemap: true,
+};
+
+export const DEFAULT_LLMS_TXT: LlmsTxtRuleOptions = {
+  severity: 'warning',
+  checkLinks: true,
+};
+
+export const DEFAULT_SECURITY_HEADERS: SecurityHeadersRuleOptions = {
+  severity: 'warning',
+  file: '_headers',
+  requiredHeaders: ['Content-Security-Policy', 'X-Content-Type-Options', 'Referrer-Policy'],
+  requireFrameProtection: true,
+  checkCsp: true,
+};
+
+export const DEFAULT_LEGAL_PAGES: LegalPagesRuleOptions = {
+  severity: 'warning',
+  links: [
+    { label: 'Impressum', pattern: /impressum|imprint|legal[-_\s]?notice/i },
+    { label: 'privacy policy', pattern: /datenschutz|privacy/i },
+  ],
+  ignore: [],
 };
 
 export const DEFAULT_SCORE: ScoreOptions = {
@@ -412,6 +511,14 @@ function resolveRule<T extends object>(
   if (value === false) return false;
   if (value === undefined || value === true) return { ...defaults };
   return { ...defaults, ...value };
+}
+
+/** Like {@link resolveRule}, but `undefined` leaves the rule disabled. */
+function resolveOptInRule<T extends object>(
+  value: boolean | Partial<T> | undefined,
+  defaults: T,
+): false | T {
+  return value === undefined ? false : resolveRule(value, defaults);
 }
 
 /**
@@ -462,6 +569,10 @@ export function resolveConfig(userConfig: SeoEnforcerUserConfig = {}): ResolvedC
       structuredData: resolveRule(rules.structuredData, DEFAULT_STRUCTURED_DATA),
       orphanPages: resolveRule(rules.orphanPages, DEFAULT_ORPHAN_PAGES),
       sitemapCoverage: resolveRule(rules.sitemapCoverage, DEFAULT_SITEMAP_COVERAGE),
+      robotsTxt: resolveRule(rules.robotsTxt, DEFAULT_ROBOTS_TXT),
+      llmsTxt: resolveOptInRule(rules.llmsTxt, DEFAULT_LLMS_TXT),
+      securityHeaders: resolveOptInRule(rules.securityHeaders, DEFAULT_SECURITY_HEADERS),
+      legalPages: resolveOptInRule(rules.legalPages, DEFAULT_LEGAL_PAGES),
     },
   };
 }

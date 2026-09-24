@@ -6,12 +6,19 @@
 
 [![CI](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/ci.yml/badge.svg)](https://github.com/SlashGordon/astro-seo-enforcer/actions/workflows/ci.yml)
 
-> An Astro integration that parses your final, generated static HTML and fails the build when it detects SEO violations.
+> An Astro integration that parses your final, generated static HTML and fails the build when it detects SEO or security problems.
 
 `astro-seo-enforcer` hooks into `astro:build:done`, walks the output directory,
 parses every `.html` file with [`node-html-parser`](https://github.com/taoqf/node-html-parser)
 and runs a set of configurable SEO rules. If anything is wrong it prints a
 readable report and exits with a non-zero code so your CI/CD pipeline fails.
+
+SEO and security go hand in hand, so the tool helps you test both. During the
+build it checks titles, canonicals, links, sitemaps and `robots.txt`, and on
+request your `_headers` file and every page against its Content-Security-Policy.
+After the deploy, [`astro-seo-enforcer live`](#live-checks-post-deploy) checks
+what the server actually sends: DNS and redirects for the apex and `www` hosts,
+HSTS and the other security headers, and a sample of the live pages.
 
 - Checks the real HTML shipped to users, not your source `.astro` files.
 - Runs with no configuration, and takes a full config object when you need one.
@@ -146,6 +153,11 @@ seoEnforcer({
     structuredData: { severity: 'warning', require: false, requireTypes: ['BreadcrumbList'] },
     orphanPages: { severity: 'warning', entryPoints: ['index.html'] },
     sitemapCoverage: { severity: 'warning', requireInSitemap: true },
+    robotsTxt: { severity: 'warning', requireSitemap: true },
+    // Site hygiene, off by default and not part of the SEO score:
+    llmsTxt: true,
+    securityHeaders: { file: '_headers', checkCsp: true },
+    legalPages: true,
   },
   // Weights behind the SEO health score (see "Score & reports" below).
   score: { errorWeight: 6, warningWeight: 1.5 },
@@ -179,8 +191,8 @@ export default defineConfig({
 | `score`   | `object`                          | see below      | Weights behind the SEO health score. See [Score & reports](#score--reports). |
 | `report`  | `object`                          | see below      | Write a JSON / HTML report to disk. See [Score & reports](#score--reports).  |
 
-`exclude` patterns are matched against the **POSIX path relative to the build
-output directory** (e.g. `blog/hello/index.html`).
+`exclude` patterns are matched against the POSIX path relative to the build
+output directory (e.g. `blog/hello/index.html`).
 
 ### Rules
 
@@ -197,7 +209,7 @@ an object to override individual options.
 | `canonical`        | error            | Exactly one `<link rel="canonical">` with a non-empty `href`. With `requireAbsolute`, the href must be an absolute http(s) URL.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `anchorText`       | warning          | `<a>` elements do not use generic text from `bannedPhrases`, and links are not left without any accessible name.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `internalLinks`    | error            | Every internal `<a href>` resolves to a page or asset that exists in the build output, matched the way a static host serves files (`/blog/` and `/blog` both resolve to `blog/index.html`). With `checkFragments`, a same-page `#section` link must match an `id` or `<a name>` on the page; a broken fragment is reported at `fragmentSeverity` (`warning` by default, since JS-rendered anchors are absent from the built HTML). External links, `mailto:`/`tel:`, `href="#"` and query-only links are ignored.                                                               |
-| `jsDependency`     | error            | `<body>` contains at least `minTextLength` characters of visible text (a near-empty body suggests client-only rendering).                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `jsDependency`     | error            | The page's `<main>` / `<article>` region (or `<body>` without one, or with `scopeToMain: false`) contains at least `minTextLength` characters of visible text; an empty region suggests client-only rendering. A short `<h1>` matching `noJsNotice` ("JavaScript required", "Please enable JavaScript", German and Spanish variants) is flagged as the sign of a shell page.                                                                                                                                                                                                    |
 | `robots`           | warning          | Warns (configurable via `severity`) when `<meta name="robots">` / `googlebot` contains one of `directives` (`noindex` / `nofollow`).                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `duplicateId`      | error            | No `id` attribute value is used more than once in a document.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `imageSize`        | warning          | Local images weigh no more than `maxBytes`. The weight check covers `<img src>` and every URL in an `<img srcset>` or `<picture>` `<source srcset>`. Images also carry `width`/`height` (`requireDimensions`) so the browser can reserve space and avoid layout shift.                                                                                                                                                                                                                                                                                                          |
@@ -206,6 +218,19 @@ an object to override individual options.
 | `structuredData`   | warning          | Every `<script type="application/ld+json">` must contain valid JSON. With `requireTypes`, the listed `@type` values (e.g. `BreadcrumbList`) must appear in the page's JSON-LD. With `require`, a page that ships no JSON-LD at all is flagged.                                                                                                                                                                                                                                                                                                                                  |
 | `orphanPages`      | warning          | Flags HTML pages that no other page links to and no sitemap lists. `entryPoints` (default `['index.html']`) are always considered reachable; use `ignore` for intentional stand-alone pages.                                                                                                                                                                                                                                                                                                                                                                                    |
 | `sitemapCoverage`  | warning          | Cross-checks the build against its `sitemap*.xml`: every `<loc>` must resolve to a real file, every indexable page should be listed (`requireInSitemap`), and a page must not be both `noindex` and in a sitemap. With no sitemap present and `requireInSitemap`, emits a single notice.                                                                                                                                                                                                                                                                                        |
+| `robotsTxt`        | warning          | `robots.txt` exists, does not block the whole site for `*` or Googlebot, and its `Sitemap:` lines are absolute URLs to sitemaps that exist in the build (`requireSitemap` wants at least one). Pages a sitemap lists but `robots.txt` disallows are flagged, since the two contradict each other.                                                                                                                                                                                                                                                                               |
+
+#### Site hygiene rules
+
+Not SEO in the narrow sense, but checks a static site should pass before it
+ships. All three are off by default and do not count toward the SEO score.
+They still show up in the report and in `failOn`.
+
+| Rule              | Default severity | What it checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `llmsTxt`         | warning          | [`llms.txt`](https://llmstxt.org) exists and opens with a `# Title` heading. With `checkLinks`, relative links and absolute links to your Astro `site` must resolve to files in the build (e.g. the `.md` copies of your pages).                                                                                                                                                                                                                                                                             |
+| `securityHeaders` | warning          | A Netlify / Cloudflare Pages `_headers` file sets every header in `requiredHeaders` for `/` and protects against framing (`X-Frame-Options` or CSP `frame-ancestors`). With `checkCsp`, every page's scripts, stylesheets, images, media, frames, inline `<script>`/`<style>` and `style=""`/`on*=""` attributes are checked against the Content-Security-Policy that applies to that page, so a new third-party host or a changed inline script fails the build instead of breaking silently in production. |
+| `legalPages`      | warning          | Every page links to each entry in `links`, matched against the link's `href` and text. The default looks for an Impressum (`impressum`, `imprint`, `legal notice`) and a privacy policy (`datenschutz`, `privacy`); § 5 DDG requires the Impressum to be reachable from every page.                                                                                                                                                                                                                          |
 
 #### Rule option reference
 
@@ -247,6 +272,8 @@ interface InternalLinksRuleOptions {
 
 interface JsDependencyRuleOptions {
   minTextLength: number; // default 50
+  scopeToMain: boolean; // default true; measure <main>/<article>, fall back to <body>
+  noJsNotice: RegExp | false; // default matches "JavaScript required" & co.; false disables
 }
 
 interface CanonicalRuleOptions {
@@ -298,6 +325,30 @@ interface SitemapCoverageRuleOptions {
   requireInSitemap: boolean; // default true; every indexable page must be listed
   ignore: Array<string | RegExp>; // default []; paths exempt from requireInSitemap
 }
+
+interface RobotsTxtRuleOptions {
+  severity: 'error' | 'warning'; // default 'warning'
+  requireSitemap: boolean; // default true; robots.txt must have a Sitemap: line (when a sitemap exists)
+}
+
+interface LlmsTxtRuleOptions {
+  severity: 'error' | 'warning'; // default 'warning'
+  checkLinks: boolean; // default true; links to this site must exist in the build
+}
+
+interface SecurityHeadersRuleOptions {
+  severity: 'error' | 'warning'; // default 'warning'
+  file: string; // default '_headers'; path in the build output
+  requiredHeaders: string[]; // default ['Content-Security-Policy','X-Content-Type-Options','Referrer-Policy']
+  requireFrameProtection: boolean; // default true; X-Frame-Options or CSP frame-ancestors
+  checkCsp: boolean; // default true; check every page against its CSP
+}
+
+interface LegalPagesRuleOptions {
+  severity: 'error' | 'warning'; // default 'warning'
+  links: Array<{ label: string; pattern: RegExp }>; // default Impressum + privacy policy
+  ignore: Array<string | RegExp>; // default []; dist-relative paths / prefixes / globs / RegExp
+}
 ```
 
 > **Note:** `imageSize` reads the referenced files from the build output on disk.
@@ -332,6 +383,15 @@ interface SitemapCoverageRuleOptions {
 > `sitemapCoverage: { requireInSitemap: false }` to only validate the sitemap
 > without requiring full coverage, or `sitemapCoverage: false` to skip it.
 
+> **Note:** `securityHeaders` reads the `_headers` file from the build output
+> (Astro copies `public/_headers` there). Headers from every block whose path
+> pattern matches a page apply to it, `! Name` lines detach a header, and
+> several matching CSPs are all enforced, as the host does. The CSP check
+> is static: it cannot see what scripts fetch at runtime (`connect-src`), and it
+> treats nonces and `'strict-dynamic'` as allowed. When an inline `<script>` or
+> `<style>` is blocked, the hint contains the exact `'sha256-…'` source to add.
+> Set Astro's `site` so absolute URLs to your own domain count as `'self'`.
+
 > **Note:** `thinContent`, `structuredData`, `metaDescription.checkDuplicates`,
 > `headingHierarchy.checkDuplicateH1` and `duplicateContent.minUniqueRatio` are
 > geared at programmatic / templated page sets. They all emit warnings, so they
@@ -341,12 +401,13 @@ interface SitemapCoverageRuleOptions {
 
 ## Score & reports
 
-Every run computes an **SEO health score** from `0` to `100` (with a letter
-grade, `A`–`F`) alongside the violation list. It is not a simple violation
-count: it looks at errors and warnings **per scanned page**, so a handful of
-findings on an otherwise large, clean site barely moves the score, while the
-same findings on a five-page site cost much more. The terminal report prints
-it next to the title; it is also included in the JSON and HTML reports below.
+Every run computes an SEO health score from `0` to `100`, with a letter grade
+from `A` to `F`, alongside the violation list. It weighs errors and warnings per
+scanned page, so a handful of findings on a large, clean site barely moves the
+score, while the same findings on a five-page site cost much more. The site
+hygiene rules (`llmsTxt`, `securityHeaders`, `legalPages`) are left out of the
+score. The terminal report prints it next to the title, and the JSON and HTML
+reports below include it too.
 
 | Grade | Score range |
 | ----- | ----------- |
@@ -365,8 +426,8 @@ seoEnforcer({
 });
 ```
 
-Set `report.json` and/or `report.html` to write the same data to disk —
-useful as a CI/CD artifact, a status badge source, or just a shareable page:
+Set `report.json` and/or `report.html` to write the same data to disk, e.g. as
+a CI/CD artifact, a status badge source or a page to share:
 
 ```js
 seoEnforcer({
@@ -383,15 +444,89 @@ seoEnforcer({
 | `report.html` | `boolean \| string` | `false` | Same as `json`, but a self-contained static HTML page (no external assets).      |
 
 The JSON report contains a timestamp, the summary counts, the full score
-(including a per-rule breakdown) and every violation — everything you need to
-gate a pipeline or feed a dashboard without re-parsing the terminal output.
+(including a per-rule breakdown) and every violation, so you can gate a
+pipeline or feed a dashboard without parsing the terminal output.
 The HTML report is a single portable file: open it locally, or upload it as a
 build artifact your CI provider can link to from the job summary.
 
 > **Note:** report paths are resolved relative to the Astro project root
-> (where `astro.config.mjs` lives), not the build output directory — so the
-> report survives independently of whatever you deploy from `dist/`. Pass an
-> absolute path to write it anywhere else.
+> (where `astro.config.mjs` lives), not the build output directory, so the
+> report does not end up in whatever you deploy from `dist/`. Pass an absolute
+> path to write it anywhere else.
+
+---
+
+## Live checks (post-deploy)
+
+Some problems never show up in `dist/`: a missing DNS record for the apex
+domain, a CDN that serves no security headers, a host that answers `robots.txt`
+with your `index.html`, or a deploy that is not the build you checked. The
+`live` command checks the deployed site over the network:
+
+```bash
+npx astro-seo-enforcer live https://www.example.com
+```
+
+For example, a quick run against a real site with five sampled pages and an
+HTML report:
+
+```bash
+npx astro-seo-enforcer live https://www.howtolosemoneyfast.com/ --pages 5 --html seo-live.html
+```
+
+From a checkout of this repository, `npm run live` builds the CLI first:
+
+```bash
+npm run live -- https://www.howtolosemoneyfast.com/ --pages 5
+```
+
+The run shows a spinner with the current step, then each page or host with
+its findings, a "Live checks" box that lists every check group as passed,
+failed or skipped (so a clean run still shows what was checked), and the score:
+
+```text
+◇  Live checks ────────────────────────────────────────────────────────────╮
+│                                                                          │
+│  liveDomain   ✔ passed        DNS, https, www redirect, redirect chains  │
+│  liveHeaders  ✔ passed        HSTS, CSP, framing, nosniff, referrer …    │
+│  liveHttp     ✔ passed        homepage, robots.txt, sitemap, status      │
+│  pageRules    ⚠ 3 warning(s)  per-page rules on the sampled pages        │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+└  SEO health score 99/100 (A)  ·  0 errors  ·  3 warning(s)
+```
+
+The `live` command needs Node 20.12 or later; the Astro integration itself
+does not.
+
+| Check           | What it looks at                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `liveDomain`    | The host and its apex / `www` twin resolve. The twin redirects to the host with a permanent 301/308 (not a 302, a 5xx, or a second copy of the site), and `http://` redirects to `https://`. Every entry (`http://` and the twin) reaches the canonical URL in one hop, without a redirect loop; the same-host `http` → `https` upgrade that HSTS preload requires is allowed as a first hop. |
+| `liveHeaders`   | The homepage sends HSTS (`max-age` of at least 180 days), an enforced CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options` or `frame-ancestors`, and `Permissions-Policy`. Every sampled page is checked against the CSP it is served with. Not counted in the score.                                                                                                 |
+| `liveHttp`      | `robots.txt` answers 200 as plain text, a sitemap is reachable, every sampled page answers 200 without redirecting, and none is sent with `X-Robots-Tag: noindex`.                                                                                                                                                                                                                            |
+| every page rule | The homepage plus an even spread of sitemap URLs (`--pages`, default 20) go through the same per-page rules as the build. `internalLinks` and `imageSize` are skipped, since they read the build output.                                                                                                                                                                                      |
+
+| Option              | Default | Description                                                                              |
+| ------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| `--pages <n>`       | `20`    | Pages to fetch and lint.                                                                 |
+| `--fail-on <level>` | `error` | `error`, `warning` or `never`; sets the exit code. Falls back to `failOn` in `--config`. |
+| `--config <file>`   | none    | A module whose default export is your `seoEnforcer()` options, so rules match the build. |
+| `--json <file>`     | none    | Write a JSON report.                                                                     |
+| `--html <file>`     | none    | Write an HTML report.                                                                    |
+| `--timeout <ms>`    | `10000` | Per-request timeout. Each request is retried once.                                       |
+
+Run it as a CI step after the deploy. During `astro build` the new version
+is not live yet, so a live check there would test the previous deploy:
+
+```yaml
+- name: Check the deployed site
+  run: npx astro-seo-enforcer live https://www.example.com --config seo.config.mjs --html seo-live.html
+```
+
+The apex / `www` check only pairs `www.example.com` with `example.com`; other
+subdomains are left alone. The same checks are available programmatically as
+`runLiveChecks({ url, config })`.
 
 ---
 
@@ -526,4 +661,4 @@ MIT © [SlashGordon](https://www.slashgordon.link).
 If this integration saves you time, consider buying me a coffee. It helps keep
 the maintenance going.
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-SlashGordon-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/SlashGordon)
+<a href="https://buymeacoffee.com/SlashGordon"><img src=".github/assets/buymeacoffee-badge.svg" alt="Buy Me A Coffee" width="180"></a>

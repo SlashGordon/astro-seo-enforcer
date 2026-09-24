@@ -7,15 +7,15 @@ export interface OrphanPagesInput {
   pages: readonly string[];
   /** Output files at least one page links to via an internal `<a href>`. */
   linkedFiles: ReadonlySet<string>;
-  /** Output files listed in a sitemap — also counted as reachable. */
+  /** Output files listed in a sitemap, which also count as reachable. */
   sitemapFiles: ReadonlySet<string>;
 }
 
 /**
  * Flags HTML pages that nothing in the build links to and no sitemap advertises.
- * Programmatic page sets routinely leave individual spokes with no inbound link
- * when a hub or pagination step is missed — crawlers may never find them and
- * they accrue no internal link equity.
+ * Programmatic page sets often leave single pages with no inbound link when a
+ * hub or pagination step is missed. Crawlers may never find those pages, and
+ * they get no internal link equity.
  */
 export function findOrphanPages(
   input: OrphanPagesInput,

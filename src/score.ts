@@ -7,7 +7,7 @@ export interface ScoreRuleImpact {
   rule: string;
   errors: number;
   warnings: number;
-  /** This rule's contribution to `rawDeduction` — the two sum to it exactly. */
+  /** This rule's share of `rawDeduction`. The shares of all rules add up to it exactly. */
   impact: number;
 }
 
@@ -22,6 +22,14 @@ export interface SeoScore {
   byRule: ScoreRuleImpact[];
 }
 
+/** Site-hygiene rules that show up in reports but do not count toward the SEO score. */
+export const UNSCORED_RULES: ReadonlySet<string> = new Set([
+  'llmsTxt',
+  'securityHeaders',
+  'legalPages',
+  'liveHeaders',
+]);
+
 const GRADE_BANDS: ReadonlyArray<{ min: number; grade: SeoScore['grade'] }> = [
   { min: 90, grade: 'A' },
   { min: 80, grade: 'B' },
@@ -32,15 +40,16 @@ const GRADE_BANDS: ReadonlyArray<{ min: number; grade: SeoScore['grade'] }> = [
 
 /**
  * Scores a site's SEO health from `0` to `100` based on how many errors and
- * warnings its pages carry **on average** — a handful of findings on an
- * otherwise large, clean site barely moves the score, while the same findings
- * on a five-page site are a much bigger share of it.
+ * warnings its pages carry on average. A handful of findings on a large, clean
+ * site barely moves the score; the same findings on a five-page site cost much
+ * more.
  */
 export function computeScore(
-  violations: readonly Violation[],
+  allViolations: readonly Violation[],
   scannedFiles: number,
   weights: ScoreOptions,
 ): SeoScore {
+  const violations = allViolations.filter((violation) => !UNSCORED_RULES.has(violation.rule));
   const pages = Math.max(1, scannedFiles);
   const byRuleCounts = new Map<string, { errors: number; warnings: number }>();
   for (const violation of violations) {

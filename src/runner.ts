@@ -9,6 +9,9 @@ import type { PageContext, Violation } from './types.js';
 import { allRules } from './rules/index.js';
 import { findDuplicateContent } from './rules/duplicate-content.js';
 import { findDuplicateValues } from './rules/duplicate-values.js';
+import { findLlmsTxtIssues, LLMS_TXT_FILE } from './rules/llms-txt.js';
+import { findRobotsTxtIssues, ROBOTS_TXT_FILE } from './rules/robots-txt.js';
+import { findSecurityHeaderIssues } from './rules/security-headers.js';
 import type { DuplicateValuesPage } from './rules/duplicate-values.js';
 import { extractSingleH1 } from './rules/heading-hierarchy.js';
 import { extractMetaDescription } from './rules/meta-description.js';
@@ -18,6 +21,8 @@ import type { SitemapDoc } from './rules/sitemap-coverage.js';
 import { extractTitle } from './rules/title.js';
 import { computeScore } from './score.js';
 import type { SeoScore } from './score.js';
+import { collectCspResources } from './util/csp.js';
+import type { CspResource } from './util/csp.js';
 import { extractMainText, extractVisibleText } from './util/dom.js';
 import { collectLinkTargets } from './util/links.js';
 import { isExcluded } from './util/exclude.js';
@@ -27,6 +32,8 @@ export interface RunOptions {
   /** Absolute path of the directory that holds the generated `.html` files. */
   distPath: string;
   config: ResolvedConfig;
+  /** Astro's `site` URL. Lets site-file checks treat absolute links to it as internal. */
+  site?: string;
 }
 
 export interface RunResult {
@@ -40,7 +47,7 @@ export interface RunResult {
 const SITEMAP_FILE = /(^|\/)sitemap[^/]*\.xml$/i;
 
 /** Parse every HTML file under `distPath` and run all enabled rules against it. */
-export async function runSeoChecks({ distPath, config }: RunOptions): Promise<RunResult> {
+export async function runSeoChecks({ distPath, config, site }: RunOptions): Promise<RunResult> {
   const allFiles = await collectFiles(distPath);
   // Every output path (pages + assets), so rules can resolve internal links.
   const siteFiles = new Set(
@@ -59,9 +66,12 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
   const scannedPages: string[] = [];
   const noindexPages = new Set<string>();
   const linkedFiles = new Set<string>();
+  const cspPages: Array<{ file: string; resources: CspResource[] }> = [];
 
   const wantOrphan = rules.orphanPages !== false;
   const wantSitemap = rules.sitemapCoverage !== false;
+  const wantRobotsTxt = rules.robotsTxt !== false;
+  const wantCsp = rules.securityHeaders !== false && rules.securityHeaders.checkCsp;
 
   for (const absolutePath of files) {
     const file = toPosix(path.relative(distPath, absolutePath));
@@ -141,6 +151,7 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
     }
 
     if ((wantSitemap || wantOrphan) && hasNoindex(root)) noindexPages.add(file);
+    if (wantCsp) cspPages.push({ file, resources: collectCspResources(root) });
     if (wantOrphan) {
       for (const target of collectLinkTargets(root, file, siteFiles)) linkedFiles.add(target);
     }
@@ -173,8 +184,10 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
   }
 
   let sitemapFiles = new Set<string>();
-  if (wantSitemap || wantOrphan) {
+  let hasSitemap = false;
+  if (wantSitemap || wantOrphan || wantRobotsTxt) {
     const sitemaps = await readSitemaps(distPath, siteFiles);
+    hasSitemap = sitemaps.length > 0;
     const result = findSitemapCoverage(
       { sitemaps, siteFiles, pages: scannedPages, noindexPages },
       rules.sitemapCoverage || DEFAULT_SITEMAP_COVERAGE,
@@ -185,6 +198,24 @@ export async function runSeoChecks({ distPath, config }: RunOptions): Promise<Ru
   if (rules.orphanPages) {
     violations.push(
       ...findOrphanPages({ pages: scannedPages, linkedFiles, sitemapFiles }, rules.orphanPages),
+    );
+  }
+
+  const hasPages = scannedPages.length > 0;
+  if (hasPages && rules.robotsTxt) {
+    const robotsTxt = await readSiteFile(distPath, ROBOTS_TXT_FILE, siteFiles);
+    violations.push(
+      ...findRobotsTxtIssues({ robotsTxt, siteFiles, sitemapFiles, hasSitemap }, rules.robotsTxt),
+    );
+  }
+  if (hasPages && rules.llmsTxt) {
+    const llmsTxt = await readSiteFile(distPath, LLMS_TXT_FILE, siteFiles);
+    violations.push(...findLlmsTxtIssues({ llmsTxt, siteFiles, site }, rules.llmsTxt));
+  }
+  if (hasPages && rules.securityHeaders) {
+    const headersFile = await readSiteFile(distPath, rules.securityHeaders.file, siteFiles);
+    violations.push(
+      ...findSecurityHeaderIssues({ headersFile, pages: cspPages, site }, rules.securityHeaders),
     );
   }
 
@@ -235,10 +266,24 @@ async function readSitemaps(
       const xml = await fs.readFile(path.join(distPath, file), 'utf8');
       docs.push({ file, locs: extractLocs(xml) });
     } catch {
-      // Unreadable sitemap — skip it rather than fail the whole run.
+      // Skip an unreadable sitemap rather than fail the whole run.
     }
   }
   return docs;
+}
+
+/** Read a dist-relative text file, or `undefined` when the build does not contain it. */
+async function readSiteFile(
+  distPath: string,
+  file: string,
+  siteFiles: ReadonlySet<string>,
+): Promise<string | undefined> {
+  if (!siteFiles.has(file)) return undefined;
+  try {
+    return await fs.readFile(path.join(distPath, file), 'utf8');
+  } catch {
+    return undefined;
+  }
 }
 
 /** Recursively collect every file under `dir` (sorted, absolute paths). */

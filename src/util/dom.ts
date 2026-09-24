@@ -82,7 +82,7 @@ const NAMED_ENTITIES: Record<string, string> = {
   nbsp: ' ',
 };
 
-/** Minimal HTML entity decoder — enough for length/emptiness heuristics. */
+/** Minimal HTML entity decoder, enough for the length and emptiness checks. */
 export function decodeEntities(input: string): string {
   return input.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, code: string) => {
     const key = code.toLowerCase();
@@ -146,7 +146,7 @@ export function extractVisibleText(root: HTMLElement): string {
 }
 
 /**
- * Visible text of the page's primary content region — the first `<main>`,
+ * Visible text of the page's primary content region: the first `<main>`,
  * `<article>` or `role="main"` element. Returns `undefined` when the page
  * declares no such region, so callers can tell "no main content" apart from
  * "empty main content".

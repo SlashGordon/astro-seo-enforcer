@@ -18,8 +18,8 @@ export interface DuplicateValuesSpec {
 }
 
 /**
- * Flags any value shared verbatim by more than one page — the shape behind
- * "duplicate `<title>`", "duplicate meta description" and "duplicate `<h1>`".
+ * Flags any value shared verbatim by more than one page. Backs the
+ * "duplicate `<title>`", "duplicate meta description" and "duplicate `<h1>`" checks.
  * Pages with an empty or `undefined` value are left out: that state is
  * already reported by the rule that owns the field.
  */

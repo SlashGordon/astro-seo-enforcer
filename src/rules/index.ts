@@ -7,6 +7,7 @@ import { imageAltRule } from './image-alt.js';
 import { imageSizeRule } from './image-size.js';
 import { internalLinksRule } from './internal-links.js';
 import { jsDependencyRule } from './js-dependency.js';
+import { legalPagesRule } from './legal-pages.js';
 import { metaDescriptionRule } from './meta-description.js';
 import { robotsRule } from './robots.js';
 import { semanticHtmlRule } from './semantic-html.js';
@@ -30,6 +31,7 @@ export const allRules: Rule[] = [
   duplicateIdRule,
   thinContentRule,
   structuredDataRule,
+  legalPagesRule,
 ];
 
 export {
@@ -41,6 +43,7 @@ export {
   imageSizeRule,
   internalLinksRule,
   jsDependencyRule,
+  legalPagesRule,
   metaDescriptionRule,
   robotsRule,
   semanticHtmlRule,
@@ -62,3 +65,9 @@ export type {
   SitemapCoverageResult,
   SitemapDoc,
 } from './sitemap-coverage.js';
+export { findRobotsTxtIssues, parseRobotsTxt, matchRobotsRule } from './robots-txt.js';
+export type { ParsedRobotsTxt, RobotsGroup, RobotsRule, RobotsTxtInput } from './robots-txt.js';
+export { findLlmsTxtIssues } from './llms-txt.js';
+export type { LlmsTxtInput } from './llms-txt.js';
+export { findSecurityHeaderIssues, parseHeadersFile, headersForPath } from './security-headers.js';
+export type { HeadersBlock, SecurityHeadersInput } from './security-headers.js';

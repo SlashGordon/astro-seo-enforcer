@@ -7,17 +7,17 @@ import { readImageDimensions } from '../util/image-size.js';
 
 /**
  * Page speed is an SEO ranking signal, and images are usually the heaviest part
- * of a page. This rule inspects the *actual* image files referenced by the page
- * and flags three common performance problems:
+ * of a page. This rule reads the image files the page references from disk and
+ * flags three performance problems:
  *
- *  1. **Oversized files** — a single image heavier than `maxBytes`. Checked for
+ *  1. **Oversized files:** a single image heavier than `maxBytes`. Checked for
  *     every candidate the browser might download: `<img src>`, plus every URL in
  *     an `<img srcset>` or a `<source srcset>` (responsive `<picture>`) set.
- *  2. **Missing dimensions** — no `width`/`height`, which causes layout shift (CLS).
- *  3. **Wrong scale** — intrinsic pixels far larger than the displayed size,
- *     i.e. the browser downloads a huge image only to shrink it (the Lighthouse
- *     "Properly size images" audit). Only the painted `<img src>` is checked
- *     here: `srcset` candidates are *meant* to come in a range of sizes.
+ *  2. **Missing dimensions:** no `width`/`height`, which causes layout shift (CLS).
+ *  3. **Wrong scale:** intrinsic pixels far larger than the displayed size, so
+ *     the browser downloads a huge image only to shrink it (the Lighthouse
+ *     "Properly size images" audit). Only the painted `<img src>` is checked,
+ *     because `srcset` candidates come in a range of sizes on purpose.
  *
  * Remote images (`http(s)://`, `//host/…`), inline `data:` URIs and vector
  * `.svg` files are skipped: their weight/scale either cannot be measured from
@@ -29,7 +29,7 @@ export const imageSizeRule: Rule = (ctx) => {
 
   const extensions = new Set(options.extensions.map((ext) => ext.toLowerCase()));
   const violations: Violation[] = [];
-  // Weight is a per-file property — check each referenced file at most once per page.
+  // Weight belongs to the file, so check each referenced file at most once per page.
   const weighed = new Set<string>();
 
   const checkWeight = (rawSrc: string, context: string): void => {
@@ -61,7 +61,7 @@ export const imageSizeRule: Rule = (ctx) => {
     }
   };
 
-  // `<source srcset>` inside a `<picture>` is downloaded just like `<img src>`.
+  // The browser downloads `<source srcset>` inside a `<picture>` like `<img src>`.
   for (const source of ctx.root.querySelectorAll('source')) {
     for (const candidate of parseSrcset(source.getAttribute('srcset'))) {
       checkWeight(candidate, ' (srcset candidate)');
@@ -170,7 +170,7 @@ function parseStyleLength(style: string, property: 'width' | 'height'): number |
  * `srcset` is a comma-separated list of `<url> [descriptor]` entries. URLs may
  * legally contain a comma, but Astro (and every build tool in practice) emits
  * plain hashed filenames, so splitting on `,` between entries is safe enough;
- * any mangled fragment simply fails to resolve to a file and is ignored.
+ * a mangled fragment fails to resolve to a file and is ignored.
  */
 function parseSrcset(value: string | undefined | null): string[] {
   if (!value) return [];
@@ -188,7 +188,7 @@ function parseSrcset(value: string | undefined | null): string[] {
  */
 function resolveLocalImage(src: string, ctx: PageContext): string | undefined {
   if (src.length === 0) return undefined;
-  // Remote, protocol-relative, data/blob URIs — nothing on disk to read.
+  // Remote, protocol-relative and data/blob URIs have nothing on disk to read.
   if (/^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith('//')) return undefined;
 
   // Drop query string and hash fragment.

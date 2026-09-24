@@ -219,6 +219,51 @@ describe('jsDependencyRule', () => {
     const html = rules('', `<div>hi</div><script>${'console.log("x");'.repeat(50)}</script>`);
     expect(jsDependencyRule(makeContext(html))).toHaveLength(1);
   });
+
+  const SHELL = rules(
+    '',
+    '<nav><a href="/">Home</a><a href="/about/">About the project and the team</a></nav>' +
+      '<main><h1>JavaScript required</h1><div id="app"></div></main>' +
+      '<footer><a href="/impressum/">Impressum</a><a href="/privacy/">Privacy policy and cookie information</a></footer>',
+  );
+
+  it('measures <main>, so chrome cannot pad an empty shell', () => {
+    const found = jsDependencyRule(
+      makeContext(SHELL, { rules: { jsDependency: { noJsNotice: false } } }),
+    );
+    expect(found).toHaveLength(1);
+    expect(found[0]?.message).toContain('<main> exposes only');
+
+    const unscoped = makeContext(SHELL, {
+      rules: { jsDependency: { scopeToMain: false, noJsNotice: false } },
+    });
+    expect(jsDependencyRule(unscoped)).toEqual([]);
+  });
+
+  it('flags a no-JavaScript notice as the <h1>', () => {
+    for (const heading of [
+      'JavaScript required',
+      'Please enable JavaScript',
+      'JavaScript wird benötigt',
+    ]) {
+      const html = CLEAN_PAGE.replace('<h1>Widgets</h1>', `<h1>${heading}</h1>`);
+      const found = jsDependencyRule(makeContext(html));
+      expect(found.map((v) => v.message)).toEqual([
+        `The page's <h1> is a no-JavaScript notice ("${heading}"). Crawlers that do not run JavaScript take it as the page topic.`,
+      ]);
+    }
+  });
+
+  it('leaves real articles about JavaScript alone', () => {
+    for (const heading of [
+      'JavaScript: The Good Parts required reading list',
+      'How to enable JavaScript in Chrome, Firefox and Safari',
+      'Why JavaScript frameworks matter',
+    ]) {
+      const html = CLEAN_PAGE.replace('<h1>Widgets</h1>', `<h1>${heading}</h1>`);
+      expect(jsDependencyRule(makeContext(html))).toEqual([]);
+    }
+  });
 });
 
 describe('robotsRule', () => {

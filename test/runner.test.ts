@@ -31,6 +31,10 @@ describe('runSeoChecks', () => {
       '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
         '<url><loc>https://example.com/</loc></url></urlset>',
     );
+    await write(
+      'robots.txt',
+      'User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n',
+    );
 
     const result = await runSeoChecks({ distPath: dir, config: resolveConfig() });
 

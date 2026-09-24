@@ -2,7 +2,7 @@ import type { ReportSummary } from './reporter.js';
 import type { SeoScore } from './score.js';
 import type { Violation } from './types.js';
 
-/** Shape of the JSON report — every violation plus the score, as a CI/CD artifact. */
+/** Shape of the JSON report: every violation plus the score. */
 export interface JsonReport {
   generatedAt: string;
   summary: ReportSummary;

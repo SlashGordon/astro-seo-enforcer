@@ -40,12 +40,14 @@ export default function seoEnforcer(userConfig: SeoEnforcerUserConfig = {}): Ast
   const config = resolveConfig(userConfig);
   // Set by `astro:config:done`, which always runs before `astro:build:done`.
   let projectRoot = new URL(`file://${process.cwd()}/`);
+  let site: string | undefined;
 
   return {
     name: INTEGRATION_NAME,
     hooks: {
       'astro:config:done': ({ config: astroConfig }) => {
         projectRoot = astroConfig.root;
+        site = astroConfig.site;
       },
       'astro:build:done': async ({ dir, logger }) => {
         if (!config.enabled) {
@@ -56,7 +58,7 @@ export default function seoEnforcer(userConfig: SeoEnforcerUserConfig = {}): Ast
         const distPath = fileURLToPath(dir);
         logger.info('Analysing generated HTML for SEO violations…');
 
-        const result = await runSeoChecks({ distPath, config });
+        const result = await runSeoChecks({ distPath, config, site });
         const { violations, scannedFiles, errorCount, warningCount, score } = result;
 
         if (scannedFiles === 0) {
@@ -156,6 +158,11 @@ export type {
   StructuredDataRuleOptions,
   OrphanPagesRuleOptions,
   SitemapCoverageRuleOptions,
+  RobotsTxtRuleOptions,
+  LlmsTxtRuleOptions,
+  SecurityHeadersRuleOptions,
+  LegalPagesRuleOptions,
+  LegalPageLink,
 } from './config.js';
 export type { Violation, Severity, PageContext, Rule } from './types.js';
 export { formatReport } from './reporter.js';
@@ -166,4 +173,6 @@ export { formatHtmlReport } from './report-html.js';
 export { computeScore } from './score.js';
 export type { SeoScore, ScoreRuleImpact } from './score.js';
 export { runSeoChecks } from './runner.js';
+export { formatLiveChecks, runLiveChecks } from './live.js';
+export type { LiveCheck, LiveOptions, LiveResult, FetchLike, LookupLike } from './live.js';
 export type { RunOptions, RunResult } from './runner.js';

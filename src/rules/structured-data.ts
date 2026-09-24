@@ -24,8 +24,8 @@ function collectTypes(node: unknown, into: Set<string>): void {
  * must appear somewhere in the page's structured data. With `require`, a page
  * that ships no JSON-LD at all is flagged.
  *
- * All findings are warnings by default — missing or malformed schema will not
- * break a build unless you raise `failOn`.
+ * All findings are warnings by default, so missing or malformed schema does not
+ * break a build unless you set `failOn: 'warning'`.
  */
 export const structuredDataRule: Rule = (ctx) => {
   const options = ctx.config.rules.structuredData;

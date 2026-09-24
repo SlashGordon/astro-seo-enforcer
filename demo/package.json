@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.2.9",
+    "astro": "^7.3.4",
     "astro-seo-enforcer": "file:.."
   }
 }
