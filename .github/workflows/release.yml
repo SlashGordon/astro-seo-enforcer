@@ -36,11 +36,14 @@ jobs:
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-          cache: npm
+          cache: 'pnpm'
 
       # Trusted publishing (tokenless OIDC auth) needs npm >= 11.5.1;
       # Node 22 still bundles npm 10.
@@ -53,6 +56,9 @@ jobs:
           echo "git tag=${{ needs.release-please.outputs.tag_name }}  package.json=$pkg"
           test "$pkg" = "${{ needs.release-please.outputs.tag_name }}"
 
-      - run: npm ci
-      - run: npm run typecheck && npm test && npm run build
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck && pnpm test && pnpm run build
+      # npm publishes with trusted publishing and the .npmrc that setup-node wrote for registry-url; pnpm 11 and
+      # later do not read that file, which setup-node passes as NPM_CONFIG_USERCONFIG. Its prepublishOnly
+      # script runs pnpm run clean and build.
       - run: npm publish --provenance --access public

@@ -3,7 +3,7 @@ name: Autofix
 # Runs on branch pushes rather than `pull_request` so it never hits the
 # "workflow run required approval" gate that applies to fork / bot PRs —
 # and it can only ever touch branches that live in this repo. Fork
-# contributors run `npm run format` locally instead.
+# contributors run `pnpm run format` locally instead.
 on:
   push:
     branches-ignore:
@@ -19,14 +19,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
+          cache: 'pnpm'
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
-      - run: npm run format
+      - run: pnpm run format
 
       # No-op when nothing changed; the push it makes uses GITHUB_TOKEN,
       # which by design does not retrigger this workflow.

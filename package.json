@@ -3,6 +3,7 @@
   "version": "1.7.0",
   "description": "Astro integration that parses the final static HTML and fails the build when it detects SEO violations.",
   "type": "module",
+  "packageManager": "pnpm@12.23.0",
   "license": "MIT",
   "author": "SlashGordon",
   "keywords": [
@@ -50,13 +51,13 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "live": "npm run build && node dist/cli.js live",
+    "live": "pnpm run build && node dist/cli.js live",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "pnpm run clean && pnpm run build"
   },
   "dependencies": {
     "@clack/prompts": "^1.8.1",

@@ -5,7 +5,7 @@
   "type": "module",
   "description": "End-to-end demo: a small Astro site with astro-seo-enforcer wired in and passing.",
   "scripts": {
-    "prebuild": "npm --prefix .. run build",
+    "prebuild": "pnpm --dir .. run build",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview"
@@ -13,6 +13,6 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.5",
     "astro": "^7.3.4",
-    "astro-seo-enforcer": "file:.."
+    "astro-seo-enforcer": "link:.."
   }
 }

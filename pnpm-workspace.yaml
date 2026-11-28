@@ -1,0 +1,5 @@
+# pnpm settings of this package. node_modules stays flat like npm's.
+nodeLinker: hoisted
+# esbuild's install script stays off, as under npm with ignore-scripts: it finds its binary in its optional dependencies.
+allowBuilds:
+  esbuild: false

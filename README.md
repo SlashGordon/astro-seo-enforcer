@@ -492,10 +492,10 @@ HTML report:
 npx astro-seo-enforcer live https://www.slashgordon.link/ --pages 5 --html seo-live.html
 ```
 
-From a checkout of this repository, `npm run live` builds the CLI first:
+From a checkout of this repository, `pnpm run live` builds the CLI first:
 
 ```bash
-npm run live -- https://www.slashgordon.link/ --pages 5
+pnpm run live https://www.slashgordon.link/ --pages 5
 ```
 
 The run shows a spinner with the current step, then each page or host with
@@ -643,20 +643,20 @@ if (result.errorCount > 0) process.exit(1);
 ## Development
 
 ```bash
-npm install
-npm test              # run the Vitest suite once
-npm run test:watch
-npm run build         # emit dist/
-npm run typecheck
-npm run format:check  # Prettier
+pnpm install
+pnpm test              # run the Vitest suite once
+pnpm run test:watch
+pnpm run build         # emit dist/
+pnpm run typecheck
+pnpm run format:check  # Prettier
 
-# End-to-end: build a real Astro site with the integration wired in via file:..
-npm install --prefix demo
-npm run build --prefix demo
+# End-to-end: build a real Astro site with the integration wired in via link:..
+pnpm --dir demo install
+pnpm --dir demo run build
 ```
 
 The [`demo/`](./demo) directory is a minimal Astro site whose pages are written
-to satisfy the default rule set, so `npm run build --prefix demo` succeeds and
+to satisfy the default rule set, so `pnpm --dir demo run build` succeeds and
 acts as an integration test. Break one of its pages and the build fails.
 
 ---
