@@ -27,6 +27,7 @@ export const UNSCORED_RULES: ReadonlySet<string> = new Set([
   'llmsTxt',
   'securityHeaders',
   'legalPages',
+  'gdpr',
   'liveHeaders',
 ]);
 

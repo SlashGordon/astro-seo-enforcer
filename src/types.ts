@@ -40,6 +40,8 @@ export interface PageContext {
    * (HTML pages *and* static assets). Used to resolve internal links.
    */
   siteFiles: ReadonlySet<string>;
+  /** The site's own URL (Astro's `site`, or the deployed URL in live mode), when known. */
+  site?: string;
   /** Fully resolved configuration. */
   config: ResolvedConfig;
 }

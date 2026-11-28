@@ -163,6 +163,7 @@ export type {
   SecurityHeadersRuleOptions,
   LegalPagesRuleOptions,
   LegalPageLink,
+  GdprRuleOptions,
 } from './config.js';
 export type { Violation, Severity, PageContext, Rule } from './types.js';
 export { formatReport } from './reporter.js';

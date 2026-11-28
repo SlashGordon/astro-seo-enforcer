@@ -25,7 +25,7 @@ HSTS and the other security headers, and a sample of the live pages.
 - Uses a lightweight HTML parser with a single pass per file.
 - Built for CI: a grouped, colourised report and a non-zero exit code on failure.
 
-It started as the build gate for [patioplanner.app](https://www.patioplanner.app/) and grew into a standalone integration from there. It now also runs in production on [slashgordon.link](https://www.slashgordon.link/), [druckzug.pro](https://www.druckzug.pro/), [howtolosemoneyfast.com](https://www.howtolosemoneyfast.com/) and [html-to-markdown-ai.com](https://www.html-to-markdown-ai.com/).
+It started as the build gate for [patioplanner.app](https://www.patioplanner.app/) and grew into a standalone integration from there. It now also runs in production on [slashgordon.link](https://www.slashgordon.link/) and [druckzug.pro](https://www.druckzug.pro/).
 
 ---
 
@@ -158,6 +158,7 @@ seoEnforcer({
     llmsTxt: true,
     securityHeaders: { file: '_headers', checkCsp: true },
     legalPages: true,
+    gdpr: { allowedHosts: ['cdn.example.com'] },
   },
   // Weights behind the SEO health score (see "Score & reports" below).
   score: { errorWeight: 6, warningWeight: 1.5 },
@@ -223,7 +224,7 @@ an object to override individual options.
 #### Site hygiene rules
 
 Not SEO in the narrow sense, but checks a static site should pass before it
-ships. All three are off by default and do not count toward the SEO score.
+ships. All four are off by default and do not count toward the SEO score.
 They still show up in the report and in `failOn`.
 
 | Rule              | Default severity | What it checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -231,6 +232,7 @@ They still show up in the report and in `failOn`.
 | `llmsTxt`         | warning          | [`llms.txt`](https://llmstxt.org) exists and opens with a `# Title` heading. With `checkLinks`, relative links and absolute links to your Astro `site` must resolve to files in the build (e.g. the `.md` copies of your pages).                                                                                                                                                                                                                                                                             |
 | `securityHeaders` | warning          | A Netlify / Cloudflare Pages `_headers` file sets every header in `requiredHeaders` for `/` and protects against framing (`X-Frame-Options` or CSP `frame-ancestors`). With `checkCsp`, every page's scripts, stylesheets, images, media, frames, inline `<script>`/`<style>` and `style=""`/`on*=""` attributes are checked against the Content-Security-Policy that applies to that page, so a new third-party host or a changed inline script fails the build instead of breaking silently in production. |
 | `legalPages`      | warning          | Every page links to each entry in `links`, matched against the link's `href` and text. The default looks for an Impressum (`impressum`, `imprint`, `legal notice`) and a privacy policy (`datenschutz`, `privacy`); § 5 DDG requires the Impressum to be reachable from every page.                                                                                                                                                                                                                          |
+| `gdpr`            | warning          | Flags what a page sends to third parties before the visitor agrees to anything. Trackers (Google Analytics / Tag Manager, Google Ads, Meta Pixel, Hotjar, Clarity, LinkedIn, TikTok, Yandex) must not run on a page without a consent banner (§ 25 TDDDG). Google Fonts from Google's servers are flagged (LG München I, 3 O 17493/20). With `checkThirdParty`, every other script, stylesheet, font, image, media file, iframe and preconnect on a foreign host is flagged, once per host and page.         |
 
 #### Rule option reference
 
@@ -349,6 +351,14 @@ interface LegalPagesRuleOptions {
   links: Array<{ label: string; pattern: RegExp }>; // default Impressum + privacy policy
   ignore: Array<string | RegExp>; // default []; dist-relative paths / prefixes / globs / RegExp
 }
+
+interface GdprRuleOptions {
+  severity: 'error' | 'warning'; // default 'warning'
+  consent: RegExp; // recognises a consent manager or banner; default covers Cookiebot, Usercentrics, OneTrust, Klaro, CookieConsent, Borlabs, … and ids/classes like "cookie-banner"
+  checkThirdParty: boolean; // default true; flag every foreign host, not only trackers and Google Fonts
+  allowedHosts: Array<string | RegExp>; // default []; hosts covered by consent or a DPA (string matches subdomains too)
+  ignore: Array<string | RegExp>; // default []; dist-relative paths / prefixes / globs / RegExp
+}
 ```
 
 > **Note:** `imageSize` reads the referenced files from the build output on disk.
@@ -392,6 +402,14 @@ interface LegalPagesRuleOptions {
 > `<style>` is blocked, the hint contains the exact `'sha256-…'` source to add.
 > Set Astro's `site` so absolute URLs to your own domain count as `'self'`.
 
+> **Note:** `gdpr` reads the built HTML, so it sees what loads before any
+> script runs. It does not see requests that scripts make later, and it
+> cannot tell whether a consent manager actually blocks a tracker it found
+> next to one. Scripts with `type="text/plain"` (how Cookiebot, Klaro and
+> CookieConsent hold scripts back) count as blocked. Your own domain (Astro's
+> `site`, with or without `www.`) and relative URLs are first party. The rule
+> is a check, not legal advice.
+
 > **Note:** `thinContent`, `structuredData`, `metaDescription.checkDuplicates`,
 > `headingHierarchy.checkDuplicateH1` and `duplicateContent.minUniqueRatio` are
 > geared at programmatic / templated page sets. They all emit warnings, so they
@@ -405,7 +423,7 @@ Every run computes an SEO health score from `0` to `100`, with a letter grade
 from `A` to `F`, alongside the violation list. It weighs errors and warnings per
 scanned page, so a handful of findings on a large, clean site barely moves the
 score, while the same findings on a five-page site cost much more. The site
-hygiene rules (`llmsTxt`, `securityHeaders`, `legalPages`) are left out of the
+hygiene rules (`llmsTxt`, `securityHeaders`, `legalPages`, `gdpr`) are left out of the
 score. The terminal report prints it next to the title, and the JSON and HTML
 reports below include it too.
 
@@ -471,13 +489,13 @@ For example, a quick run against a real site with five sampled pages and an
 HTML report:
 
 ```bash
-npx astro-seo-enforcer live https://www.howtolosemoneyfast.com/ --pages 5 --html seo-live.html
+npx astro-seo-enforcer live https://www.slashgordon.link/ --pages 5 --html seo-live.html
 ```
 
 From a checkout of this repository, `npm run live` builds the CLI first:
 
 ```bash
-npm run live -- https://www.howtolosemoneyfast.com/ --pages 5
+npm run live -- https://www.slashgordon.link/ --pages 5
 ```
 
 The run shows a spinner with the current step, then each page or host with

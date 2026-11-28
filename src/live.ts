@@ -479,6 +479,7 @@ class LiveRun {
         bodyText: extractVisibleText(root),
         mainText: extractMainText(root),
         siteFiles: new Set(),
+        site: this.base.href,
         config,
       };
       for (const rule of allRules) this.violations.push(...rule(ctx));

@@ -117,6 +117,7 @@ export async function runSeoChecks({ distPath, config, site }: RunOptions): Prom
       bodyText: extractVisibleText(root),
       mainText: extractMainText(root),
       siteFiles,
+      site,
       config,
     };
 

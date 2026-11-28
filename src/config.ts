@@ -221,6 +221,28 @@ export interface LegalPagesRuleOptions {
   ignore: Array<string | RegExp>;
 }
 
+export interface GdprRuleOptions {
+  /** Severity emitted for every finding this rule produces. */
+  severity: Severity;
+  /**
+   * Recognises a consent manager or cookie banner. Tested against script
+   * URLs, inline scripts and every element's `id` and `class`.
+   */
+  consent: RegExp;
+  /**
+   * Also flag scripts, stylesheets, fonts, images, media, iframes and
+   * preconnects on any foreign host, not only trackers and Google Fonts.
+   */
+  checkThirdParty: boolean;
+  /**
+   * Foreign hosts covered by consent or a data processing agreement. A string
+   * matches the host and its subdomains, a `RegExp` is tested against the host.
+   */
+  allowedHosts: Array<string | RegExp>;
+  /** Dist-relative paths / prefixes / globs / `RegExp`s to skip. */
+  ignore: Array<string | RegExp>;
+}
+
 export interface ScoreOptions {
   /** Points deducted for errors occurring, on average, once per scanned page. */
   errorWeight: number;
@@ -290,6 +312,8 @@ export interface RulesConfig {
   securityHeaders: boolean | Partial<SecurityHeadersRuleOptions>;
   /** Off by default. */
   legalPages: boolean | Partial<LegalPagesRuleOptions>;
+  /** Off by default. */
+  gdpr: boolean | Partial<GdprRuleOptions>;
 }
 
 export interface SeoEnforcerUserConfig {
@@ -347,6 +371,7 @@ export interface ResolvedConfig {
     llmsTxt: false | LlmsTxtRuleOptions;
     securityHeaders: false | SecurityHeadersRuleOptions;
     legalPages: false | LegalPagesRuleOptions;
+    gdpr: false | GdprRuleOptions;
   };
 }
 
@@ -475,6 +500,15 @@ export const DEFAULT_LEGAL_PAGES: LegalPagesRuleOptions = {
   ignore: [],
 };
 
+export const DEFAULT_GDPR: GdprRuleOptions = {
+  severity: 'warning',
+  consent:
+    /cookiebot|usercentrics|onetrust|cookielaw|klaro|cookieconsent|cookie-?(consent|banner|notice)|consent-?(banner|manager)|iubenda|didomi|consentmanager|termly|borlabs|complianz|cookieyes|osano|tarteaucitron/i,
+  checkThirdParty: true,
+  allowedHosts: [],
+  ignore: [],
+};
+
 export const DEFAULT_SCORE: ScoreOptions = {
   errorWeight: 6,
   warningWeight: 1.5,
@@ -573,6 +607,7 @@ export function resolveConfig(userConfig: SeoEnforcerUserConfig = {}): ResolvedC
       llmsTxt: resolveOptInRule(rules.llmsTxt, DEFAULT_LLMS_TXT),
       securityHeaders: resolveOptInRule(rules.securityHeaders, DEFAULT_SECURITY_HEADERS),
       legalPages: resolveOptInRule(rules.legalPages, DEFAULT_LEGAL_PAGES),
+      gdpr: resolveOptInRule(rules.gdpr, DEFAULT_GDPR),
     },
   };
 }

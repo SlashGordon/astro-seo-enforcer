@@ -2,6 +2,7 @@ import type { Rule } from '../types.js';
 import { anchorTextRule } from './anchor-text.js';
 import { canonicalRule } from './canonical.js';
 import { duplicateIdRule } from './duplicate-id.js';
+import { gdprRule } from './gdpr.js';
 import { headingHierarchyRule } from './heading-hierarchy.js';
 import { imageAltRule } from './image-alt.js';
 import { imageSizeRule } from './image-size.js';
@@ -32,12 +33,14 @@ export const allRules: Rule[] = [
   thinContentRule,
   structuredDataRule,
   legalPagesRule,
+  gdprRule,
 ];
 
 export {
   anchorTextRule,
   canonicalRule,
   duplicateIdRule,
+  gdprRule,
   headingHierarchyRule,
   imageAltRule,
   imageSizeRule,

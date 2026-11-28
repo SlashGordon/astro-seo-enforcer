@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_LLMS_TXT, DEFAULT_ROBOTS_TXT, DEFAULT_SECURITY_HEADERS } from '../src/config.js';
 import type { SecurityHeadersRuleOptions } from '../src/config.js';
 import { findLlmsTxtIssues } from '../src/rules/llms-txt.js';
+import { gdprRule } from '../src/rules/gdpr.js';
 import { legalPagesRule } from '../src/rules/legal-pages.js';
 import { findRobotsTxtIssues, matchRobotsRule, parseRobotsTxt } from '../src/rules/robots-txt.js';
 import {
@@ -217,6 +218,76 @@ describe('legalPages', () => {
   });
 });
 
+describe('gdpr', () => {
+  const page = (head: string, body = '') =>
+    `<!doctype html><html><head>${head}</head><body><main><h1>Hi</h1>${body}</main></body></html>`;
+  const run = (html: string, gdpr: object | boolean = true, site?: string) =>
+    gdprRule({ ...makeContext(html, { rules: { gdpr } }), site }).map((v) => v.message);
+
+  it('is off by default', () => {
+    const html = page('<script src="https://www.googletagmanager.com/gtag/js?id=G-1"></script>');
+    expect(gdprRule(makeContext(html))).toEqual([]);
+  });
+
+  it('flags a tracker without a consent banner', () => {
+    expect(
+      run(page('<script src="https://www.googletagmanager.com/gtag/js?id=G-1" async></script>')),
+    ).toEqual([
+      'Google Analytics / Tag Manager runs on page load, but the page has no consent banner.',
+    ]);
+    expect(run(page("<script>!function(){fbq('init','1')}()</script>"))[0]).toContain('Meta Pixel');
+  });
+
+  it('accepts a tracker behind a consent manager or held back by type="text/plain"', () => {
+    const tracker = '<script src="https://www.googletagmanager.com/gtag/js?id=G-1"></script>';
+    expect(
+      run(page(`<script src="https://consent.cookiebot.com/uc.js"></script>${tracker}`)),
+    ).toEqual([]);
+    expect(run(page(tracker, '<div id="cookie-banner"></div>'))).toEqual([]);
+    expect(
+      run(
+        page(
+          '<script type="text/plain" data-category="analytics" src="https://www.googletagmanager.com/gtag/js"></script>',
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it('flags Google Fonts once, whether linked, preconnected or imported', () => {
+    const messages = run(
+      page(
+        '<link rel="preconnect" href="https://fonts.gstatic.com">' +
+          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">' +
+          '<style>@import url("https://fonts.googleapis.com/css2?family=Lora");</style>',
+      ),
+    );
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('Google Fonts');
+  });
+
+  it('flags third-party embeds and files, grouped by host', () => {
+    const messages = run(
+      page(
+        '<script src="https://cdn.jsdelivr.net/npm/x.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/x.css">',
+        '<iframe src="https://www.youtube.com/embed/abc"></iframe>',
+      ),
+    );
+    expect(messages).toEqual([
+      'Loads script, stylesheet from cdn.jsdelivr.net without consent, which sends every visitor’s IP address to that host.',
+      'Loads iframe from www.youtube.com without consent, which sends every visitor’s IP address to that host.',
+    ]);
+  });
+
+  it('treats the own site, allowedHosts and relative URLs as first party', () => {
+    const html = page(
+      '<script src="/app.js"></script><script src="https://www.example.com/a.js"></script>',
+      '<img src="https://img.cdn.example.net/a.png" alt="">',
+    );
+    expect(run(html, { allowedHosts: ['cdn.example.net'] }, 'https://example.com/')).toEqual([]);
+    expect(run(html, { checkThirdParty: false }, 'https://example.com/')).toEqual([]);
+  });
+});
+
 describe('score', () => {
   it('ignores site-hygiene rules', () => {
     const score = computeScore(
@@ -224,6 +295,7 @@ describe('score', () => {
         { file: '_headers', rule: 'securityHeaders', severity: 'error', message: 'x' },
         { file: 'index.html', rule: 'legalPages', severity: 'warning', message: 'x' },
         { file: 'llms.txt', rule: 'llmsTxt', severity: 'warning', message: 'x' },
+        { file: 'index.html', rule: 'gdpr', severity: 'warning', message: 'x' },
       ],
       1,
       { errorWeight: 6, warningWeight: 1.5 },
