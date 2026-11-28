@@ -7,25 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.6.1...v1.7.0) (2026-09-24)
 
-
 ### Features
 
-* added security checks ([9313ee8](https://github.com/SlashGordon/astro-seo-enforcer/commit/9313ee866c1543b80b9fafbbd289d798259172cf))
+- added security checks ([9313ee8](https://github.com/SlashGordon/astro-seo-enforcer/commit/9313ee866c1543b80b9fafbbd289d798259172cf))
 
 ## [1.6.1](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.6.0...v1.6.1) (2026-09-11)
 
-
 ### Bug Fixes
 
-* create output dir for report recursive ([f5040e1](https://github.com/SlashGordon/astro-seo-enforcer/commit/f5040e1d355a39285f392089fb6a2d242899762e))
+- create output dir for report recursive ([f5040e1](https://github.com/SlashGordon/astro-seo-enforcer/commit/f5040e1d355a39285f392089fb6a2d242899762e))
 
 ## [1.6.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.5.0...v1.6.0) (2026-09-11)
 
-
 ### Features
 
-* add SEO health score and JSON/HTML report output ([85d18c1](https://github.com/SlashGordon/astro-seo-enforcer/commit/85d18c1b4969696fdc62b2ba4f35bff0a79a4c49))
-* add SEO health score and JSON/HTML report output ([22ccfa3](https://github.com/SlashGordon/astro-seo-enforcer/commit/22ccfa3af8834204966305ab55c6fac70933219c))
+- add SEO health score and JSON/HTML report output ([85d18c1](https://github.com/SlashGordon/astro-seo-enforcer/commit/85d18c1b4969696fdc62b2ba4f35bff0a79a4c49))
+- add SEO health score and JSON/HTML report output ([22ccfa3](https://github.com/SlashGordon/astro-seo-enforcer/commit/22ccfa3af8834204966305ab55c6fac70933219c))
 
 ## [1.5.0](https://github.com/SlashGordon/astro-seo-enforcer/compare/v1.4.1...v1.5.0) (2026-09-09)
 
